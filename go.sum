@@ -8,6 +8,10 @@ github.com/apps-deployer/protos v0.0.5 h1:GHby6eA81YLy8+g28eLC0hN4yodDVzsClPj5L4
 github.com/apps-deployer/protos v0.0.5/go.mod h1:J3XImKT59RwfVIztsnfFaMjuxtHICvaoin6vw27bKA8=
 github.com/apps-deployer/protos v0.0.6 h1:cfHz4kguRrredtgDKsWuDhcW7bWdY6IAmFNRVAvnjEE=
 github.com/apps-deployer/protos v0.0.6/go.mod h1:J3XImKT59RwfVIztsnfFaMjuxtHICvaoin6vw27bKA8=
+github.com/apps-deployer/protos v0.0.7 h1:jv5ft7+dZmgNNzEHxBGWvxK2nn3sRBKSuvrOtMDGnJ4=
+github.com/apps-deployer/protos v0.0.7/go.mod h1:J3XImKT59RwfVIztsnfFaMjuxtHICvaoin6vw27bKA8=
+github.com/apps-deployer/protos v0.0.8 h1:CW4R9gQ0ppB2LXq+Ucovq366I3HZtrIKBIJ/1urtbuQ=
+github.com/apps-deployer/protos v0.0.8/go.mod h1:J3XImKT59RwfVIztsnfFaMjuxtHICvaoin6vw27bKA8=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/go-logr/logr v1.4.3 h1:CjnDlHq8ikf6E492q6eKboGOC0T8CDaOvkHCIg8idEI=
