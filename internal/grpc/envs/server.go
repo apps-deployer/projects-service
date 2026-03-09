@@ -75,12 +75,14 @@ func (s *envsServer) ListEnvs(
 	if !req.HasProjectId() {
 		return nil, status.Error(codes.InvalidArgument, "project ID is required")
 	}
-	args := &ListEnvParams{
-		ProjectId: req.GetProjectId(),
-		Limit:     req.GetLimit(),
-		Offset:    req.GetOffset(),
-	}
-	envs, err := s.envs.List(ctx, args)
+	envs, err := s.envs.List(
+		ctx,
+		&ListEnvParams{
+			ProjectId: req.GetProjectId(),
+			Limit:     req.GetLimit(),
+			Offset:    req.GetOffset(),
+		},
+	)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list envs: %v", err)
 	}
