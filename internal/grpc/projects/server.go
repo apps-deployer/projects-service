@@ -17,11 +17,11 @@ type projectsServer struct {
 }
 
 type Projects interface {
-	GetProject(ctx context.Context, id string) (*ProjectDTO, error)
-	ListProjects(ctx context.Context, ownerId string) ([]*ProjectDTO, error)
-	CreateProject(ctx context.Context, project *CreateProjectDTO) (*ProjectDTO, error)
-	UpdateProject(ctx context.Context, project *UpdateProjectDTO) error
-	DeleteProject(ctx context.Context, id string) error
+	Get(ctx context.Context, id string) (*ProjectDTO, error)
+	List(ctx context.Context, ownerId string) ([]*ProjectDTO, error)
+	Create(ctx context.Context, project *CreateProjectDTO) (*ProjectDTO, error)
+	Update(ctx context.Context, project *UpdateProjectDTO) error
+	Delete(ctx context.Context, id string) error
 }
 
 func Register(grpcServer *grpc.Server, projects Projects) {
@@ -35,7 +35,7 @@ func (s *projectsServer) GetProject(
 	if !req.HasId() {
 		return nil, status.Error(codes.InvalidArgument, "project ID is required")
 	}
-	project, err := s.projects.GetProject(ctx, req.GetId())
+	project, err := s.projects.Get(ctx, req.GetId())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get project: %v", err)
 	}
@@ -49,7 +49,7 @@ func (s *projectsServer) ListProjects(
 	ctx context.Context,
 	req *projectsv1.ListProjectsRequest,
 ) (*projectsv1.ListProjectsResponse, error) {
-	projects, err := s.projects.ListProjects(ctx, req.GetOwnerId())
+	projects, err := s.projects.List(ctx, req.GetOwnerId())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list projects: %v", err)
 	}
@@ -84,7 +84,7 @@ func (s *projectsServer) CreateProject(
 		ownerId                = req.GetOwnerId()
 		deployConfigTemplateId = req.GetDeployConfigTemplateId()
 	)
-	project, err := s.projects.CreateProject(ctx, &CreateProjectDTO{
+	project, err := s.projects.Create(ctx, &CreateProjectDTO{
 		Name:                   &name,
 		RepoUrl:                &repoUrl,
 		OwnerId:                &ownerId,
@@ -117,7 +117,7 @@ func (s *projectsServer) UpdateProject(
 		ownerId := req.GetOwnerId()
 		project.OwnerId = &ownerId
 	}
-	if err := s.projects.UpdateProject(ctx, project); err != nil {
+	if err := s.projects.Update(ctx, project); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update project: %v", err)
 	}
 	return &emptypb.Empty{}, nil
@@ -130,7 +130,7 @@ func (s *projectsServer) DeleteProject(
 	if !req.HasId() {
 		return nil, status.Error(codes.InvalidArgument, "project ID is required")
 	}
-	if err := s.projects.DeleteProject(ctx, req.GetId()); err != nil {
+	if err := s.projects.Delete(ctx, req.GetId()); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete project: %v", err)
 	}
 	return &emptypb.Empty{}, nil
