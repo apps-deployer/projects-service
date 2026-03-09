@@ -1,0 +1,15 @@
+env: "local"
+
+db:
+  host: "localhost"
+  port: 5432
+  user: "postgres"
+  password: "postgres"
+  name: "projects_db"
+
+grpc:
+  port: 50051
+  timeout: 5s
+
+auth:
+  jwt_secret: "your_jwt_secret"
