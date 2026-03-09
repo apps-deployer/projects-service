@@ -3,7 +3,8 @@ package main
 import (
 	"log/slog"
 	"os"
-	"projects-service/internal/config"
+
+	"github.com/apps-deployer/projects-service/internal/config"
 )
 
 const (

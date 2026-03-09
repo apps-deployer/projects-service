@@ -1,17 +1,5 @@
 github.com/BurntSushi/toml v1.2.1 h1:9F2/+DoOYIOksmaJFPw1tGFy1eDnIJXg+UHjuD8lTak=
 github.com/BurntSushi/toml v1.2.1/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
-github.com/apps-deployer/protos v0.0.3 h1:RpPRqC1RZhhQaYS8o+lulM8RrxEuJhzTXAlTqGFgC8I=
-github.com/apps-deployer/protos v0.0.3/go.mod h1:J3XImKT59RwfVIztsnfFaMjuxtHICvaoin6vw27bKA8=
-github.com/apps-deployer/protos v0.0.4 h1:1bJnSPeLSGKgLUZuOwiT9XuDK/6ow2QQFOHeseH3chM=
-github.com/apps-deployer/protos v0.0.4/go.mod h1:J3XImKT59RwfVIztsnfFaMjuxtHICvaoin6vw27bKA8=
-github.com/apps-deployer/protos v0.0.5 h1:GHby6eA81YLy8+g28eLC0hN4yodDVzsClPj5L4UyHNo=
-github.com/apps-deployer/protos v0.0.5/go.mod h1:J3XImKT59RwfVIztsnfFaMjuxtHICvaoin6vw27bKA8=
-github.com/apps-deployer/protos v0.0.6 h1:cfHz4kguRrredtgDKsWuDhcW7bWdY6IAmFNRVAvnjEE=
-github.com/apps-deployer/protos v0.0.6/go.mod h1:J3XImKT59RwfVIztsnfFaMjuxtHICvaoin6vw27bKA8=
-github.com/apps-deployer/protos v0.0.7 h1:jv5ft7+dZmgNNzEHxBGWvxK2nn3sRBKSuvrOtMDGnJ4=
-github.com/apps-deployer/protos v0.0.7/go.mod h1:J3XImKT59RwfVIztsnfFaMjuxtHICvaoin6vw27bKA8=
-github.com/apps-deployer/protos v0.0.8 h1:CW4R9gQ0ppB2LXq+Ucovq366I3HZtrIKBIJ/1urtbuQ=
-github.com/apps-deployer/protos v0.0.8/go.mod h1:J3XImKT59RwfVIztsnfFaMjuxtHICvaoin6vw27bKA8=
 github.com/apps-deployer/protos v0.0.9 h1:9uMUU3bv647qvz++Wd4/I7IFFVvzvPwGqFKQH6u6zz8=
 github.com/apps-deployer/protos v0.0.9/go.mod h1:J3XImKT59RwfVIztsnfFaMjuxtHICvaoin6vw27bKA8=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=

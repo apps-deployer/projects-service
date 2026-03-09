@@ -13,18 +13,18 @@ import (
 
 type projectsServer struct {
 	projectsv1.UnimplementedProjectServiceServer
-	projects Projects
+	projects ProjectsService
 }
 
-type Projects interface {
-	Get(ctx context.Context, id string) (*ProjectDTO, error)
-	List(ctx context.Context, ownerId string) ([]*ProjectDTO, error)
-	Create(ctx context.Context, project *CreateProjectDTO) (*ProjectDTO, error)
-	Update(ctx context.Context, project *UpdateProjectDTO) error
+type ProjectsService interface {
+	Get(ctx context.Context, id string) (*Project, error)
+	List(ctx context.Context, ownerId string) ([]*Project, error)
+	Create(ctx context.Context, project *CreateProjectParams) (*Project, error)
+	Update(ctx context.Context, project *UpdateProjectParams) error
 	Delete(ctx context.Context, id string) error
 }
 
-func Register(grpcServer *grpc.Server, projects Projects) {
+func Register(grpcServer *grpc.Server, projects ProjectsService) {
 	projectsv1.RegisterProjectServiceServer(grpcServer, &projectsServer{projects: projects})
 }
 
@@ -78,17 +78,11 @@ func (s *projectsServer) CreateProject(
 	if !req.HasDeployConfigTemplateId() {
 		return nil, status.Error(codes.InvalidArgument, "deploy config template is required")
 	}
-	var (
-		name                   = req.GetName()
-		repoUrl                = req.GetRepoUrl()
-		ownerId                = req.GetOwnerId()
-		deployConfigTemplateId = req.GetDeployConfigTemplateId()
-	)
-	project, err := s.projects.Create(ctx, &CreateProjectDTO{
-		Name:                   &name,
-		RepoUrl:                &repoUrl,
-		OwnerId:                &ownerId,
-		DeployConfigTemplateId: &deployConfigTemplateId,
+	project, err := s.projects.Create(ctx, &CreateProjectParams{
+		Name:                   req.GetName(),
+		RepoUrl:                req.GetRepoUrl(),
+		OwnerId:                req.GetOwnerId(),
+		DeployConfigTemplateId: req.GetDeployConfigTemplateId(),
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create project: %v", err)
@@ -103,8 +97,7 @@ func (s *projectsServer) UpdateProject(
 	if !req.HasId() {
 		return nil, status.Error(codes.InvalidArgument, "project ID is required")
 	}
-	id := req.GetId()
-	project := &UpdateProjectDTO{Id: &id}
+	project := &UpdateProjectParams{Id: req.GetId()}
 	if req.HasName() {
 		name := req.GetName()
 		project.Name = &name
@@ -136,34 +129,34 @@ func (s *projectsServer) DeleteProject(
 	return &emptypb.Empty{}, nil
 }
 
-type ProjectDTO struct {
-	Id        *string
-	Name      *string
-	RepoUrl   *string
-	OwnerId   *string
-	CreatedAt *timestamp.Timestamp
+type Project struct {
+	Id        string
+	Name      string
+	RepoUrl   string
+	OwnerId   string
+	CreatedAt timestamp.Timestamp
 }
 
-type CreateProjectDTO struct {
-	Name                   *string
-	RepoUrl                *string
-	OwnerId                *string
-	DeployConfigTemplateId *string
+type CreateProjectParams struct {
+	Name                   string
+	RepoUrl                string
+	OwnerId                string
+	DeployConfigTemplateId string
 }
 
-type UpdateProjectDTO struct {
-	Id      *string
+type UpdateProjectParams struct {
+	Id      string
 	Name    *string
 	RepoUrl *string
 	OwnerId *string
 }
 
-func (p *ProjectDTO) ToProto() *projectsv1.ProjectResponse {
+func (p *Project) ToProto() *projectsv1.ProjectResponse {
 	return projectsv1.ProjectResponse_builder{
-		Id:        p.Id,
-		Name:      p.Name,
-		RepoUrl:   p.RepoUrl,
-		OwnerId:   p.OwnerId,
-		CreatedAt: p.CreatedAt,
+		Id:        &p.Id,
+		Name:      &p.Name,
+		RepoUrl:   &p.RepoUrl,
+		OwnerId:   &p.OwnerId,
+		CreatedAt: &p.CreatedAt,
 	}.Build()
 }

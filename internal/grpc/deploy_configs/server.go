@@ -12,16 +12,16 @@ import (
 
 type deployConfigsServer struct {
 	projectsv1.UnimplementedDeployConfigServiceServer
-	deployConfigs DeployConfigs
+	deployConfigs DeployConfigsService
 }
 
-type DeployConfigs interface {
-	Generate(ctx context.Context, id string) (*GeneratedDeployConfigDTO, error)
-	Get(ctx context.Context, id string) (*DeployConfigDTO, error)
-	Update(ctx context.Context, project *UpdateDeployConfigDTO) error
+type DeployConfigsService interface {
+	Generate(ctx context.Context, id string) (*GeneratedDeployConfig, error)
+	Get(ctx context.Context, id string) (*DeployConfig, error)
+	Update(ctx context.Context, args *UpdateDeployConfigParams) error
 }
 
-func Register(grpcServer *grpc.Server, deployConfigs DeployConfigs) {
+func Register(grpcServer *grpc.Server, deployConfigs DeployConfigsService) {
 	projectsv1.RegisterDeployConfigServiceServer(
 		grpcServer,
 		&deployConfigsServer{deployConfigs: deployConfigs},
@@ -70,7 +70,7 @@ func (s *deployConfigsServer) UpdateDeployConfig(
 		return nil, status.Error(codes.InvalidArgument, "deploy config ID is required")
 	}
 	id := req.GetId()
-	config := &UpdateDeployConfigDTO{Id: &id}
+	config := &UpdateDeployConfigParams{Id: id}
 	if req.HasFrameworkId() {
 		frameworkId := req.GetFrameworkId()
 		config.FrameworkId = &frameworkId
@@ -105,9 +105,20 @@ func (s *deployConfigsServer) UpdateDeployConfig(
 	return &emptypb.Empty{}, nil
 }
 
-type DeployConfigDTO struct {
-	Id                  *string
-	ProjectId           *string
+type DeployConfig struct {
+	Id                  string
+	ProjectId           string
+	FrameworkId         string
+	RootDirOverwrite    string
+	OutputDirOverwrite  string
+	BaseImageOverwrite  string
+	InstallCmdOverwrite string
+	BuildCmdOverwrite   string
+	RunCmdOverwrite     string
+}
+
+type UpdateDeployConfigParams struct {
+	Id                  string
 	FrameworkId         *string
 	RootDirOverwrite    *string
 	OutputDirOverwrite  *string
@@ -117,51 +128,40 @@ type DeployConfigDTO struct {
 	RunCmdOverwrite     *string
 }
 
-type UpdateDeployConfigDTO struct {
-	Id                  *string
-	FrameworkId         *string
-	RootDirOverwrite    *string
-	OutputDirOverwrite  *string
-	BaseImageOverwrite  *string
-	InstallCmdOverwrite *string
-	BuildCmdOverwrite   *string
-	RunCmdOverwrite     *string
+type GeneratedDeployConfig struct {
+	Id         string
+	ProjectId  string
+	RootDir    string
+	OutputDir  string
+	BaseImage  string
+	InstallCmd string
+	BuildCmd   string
+	RunCmd     string
 }
 
-type GeneratedDeployConfigDTO struct {
-	Id         *string
-	ProjectId  *string
-	RootDir    *string
-	OutputDir  *string
-	BaseImage  *string
-	InstallCmd *string
-	BuildCmd   *string
-	RunCmd     *string
-}
-
-func (p *DeployConfigDTO) ToProto() *projectsv1.DeployConfigResponse {
+func (p *DeployConfig) ToProto() *projectsv1.DeployConfigResponse {
 	return projectsv1.DeployConfigResponse_builder{
-		Id:                  p.Id,
-		ProjectId:           p.ProjectId,
-		FrameworkId:         p.FrameworkId,
-		RootDirOverwrite:    p.RootDirOverwrite,
-		OutputDirOverwrite:  p.OutputDirOverwrite,
-		BaseImageOverwrite:  p.BaseImageOverwrite,
-		InstallCmdOverwrite: p.InstallCmdOverwrite,
-		BuildCmdOverwrite:   p.BuildCmdOverwrite,
-		RunCmdOverwrite:     p.RunCmdOverwrite,
+		Id:                  &p.Id,
+		ProjectId:           &p.ProjectId,
+		FrameworkId:         &p.FrameworkId,
+		RootDirOverwrite:    &p.RootDirOverwrite,
+		OutputDirOverwrite:  &p.OutputDirOverwrite,
+		BaseImageOverwrite:  &p.BaseImageOverwrite,
+		InstallCmdOverwrite: &p.InstallCmdOverwrite,
+		BuildCmdOverwrite:   &p.BuildCmdOverwrite,
+		RunCmdOverwrite:     &p.RunCmdOverwrite,
 	}.Build()
 }
 
-func (p *GeneratedDeployConfigDTO) ToProto() *projectsv1.GenerateDeployConfigResponse {
+func (p *GeneratedDeployConfig) ToProto() *projectsv1.GenerateDeployConfigResponse {
 	return projectsv1.GenerateDeployConfigResponse_builder{
-		Id:         p.Id,
-		ProjectId:  p.ProjectId,
-		RootDir:    p.RootDir,
-		OutputDir:  p.OutputDir,
-		BaseImage:  p.BaseImage,
-		InstallCmd: p.InstallCmd,
-		BuildCmd:   p.BuildCmd,
-		RunCmd:     p.RunCmd,
+		Id:         &p.Id,
+		ProjectId:  &p.ProjectId,
+		RootDir:    &p.RootDir,
+		OutputDir:  &p.OutputDir,
+		BaseImage:  &p.BaseImage,
+		InstallCmd: &p.InstallCmd,
+		BuildCmd:   &p.BuildCmd,
+		RunCmd:     &p.RunCmd,
 	}.Build()
 }

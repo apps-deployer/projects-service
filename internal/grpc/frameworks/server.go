@@ -12,19 +12,19 @@ import (
 
 type frameworksServer struct {
 	projectsv1.UnimplementedFrameworkServiceServer
-	frameworks Frameworks
+	frameworks FrameworksService
 }
 
-type Frameworks interface {
-	Get(ctx context.Context, id string) (*FrameworkDTO, error)
-	List(ctx context.Context, limit int64, offset int64) ([]*FrameworkDTO, error)
-	Create(ctx context.Context, project *CreateFrameworkDTO) (*FrameworkDTO, error)
-	Update(ctx context.Context, project *UpdateFrameworkDTO) error
+type FrameworksService interface {
+	Get(ctx context.Context, id string) (*Framework, error)
+	List(ctx context.Context, limit int64, offset int64) ([]*Framework, error)
+	Create(ctx context.Context, project *CreateFrameworkParams) (*Framework, error)
+	Update(ctx context.Context, project *UpdateFrameworkParams) error
 	Delete(ctx context.Context, id string) error
 }
 
 func Register(
-	grpcServer *grpc.Server, frameworks Frameworks) {
+	grpcServer *grpc.Server, frameworks FrameworksService) {
 	projectsv1.RegisterFrameworkServiceServer(
 		grpcServer,
 		&frameworksServer{frameworks: frameworks},
@@ -82,23 +82,14 @@ func (s *frameworksServer) CreateFramework(
 	if !req.HasRunCmd() {
 		return nil, status.Error(codes.InvalidArgument, "framework run command is required")
 	}
-	var (
-		name       = req.GetName()
-		rootDir    = req.GetRootDir()
-		outputDir  = req.GetOutputDir()
-		baseImage  = req.GetBaseImage()
-		installCmd = req.GetInstallCmd()
-		buildCmd   = req.GetBuildCmd()
-		runCmd     = req.GetRunCmd()
-	)
-	framework, err := s.frameworks.Create(ctx, &CreateFrameworkDTO{
-		Name:       &name,
-		RootDir:    &rootDir,
-		OutputDir:  &outputDir,
-		BaseImage:  &baseImage,
-		InstallCmd: &installCmd,
-		BuildCmd:   &buildCmd,
-		RunCmd:     &runCmd,
+	framework, err := s.frameworks.Create(ctx, &CreateFrameworkParams{
+		Name:       req.GetName(),
+		RootDir:    req.GetRootDir(),
+		OutputDir:  req.GetOutputDir(),
+		BaseImage:  req.GetBaseImage(),
+		InstallCmd: req.GetInstallCmd(),
+		BuildCmd:   req.GetBuildCmd(),
+		RunCmd:     req.GetRunCmd(),
 	})
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create framework: %v", err)
@@ -114,7 +105,7 @@ func (s *frameworksServer) UpdateFramework(
 		return nil, status.Error(codes.InvalidArgument, "framework ID is required")
 	}
 	id := req.GetId()
-	framework := &UpdateFrameworkDTO{Id: &id}
+	framework := &UpdateFrameworkParams{Id: id}
 	if req.HasName() {
 		name := req.GetName()
 		framework.Name = &name
@@ -162,8 +153,29 @@ func (s *frameworksServer) DeleteFramework(
 	return &emptypb.Empty{}, nil
 }
 
-type FrameworkDTO struct {
-	Id         *string
+type Framework struct {
+	Id         string
+	Name       string
+	RootDir    string
+	OutputDir  string
+	BaseImage  string
+	InstallCmd string
+	BuildCmd   string
+	RunCmd     string
+}
+
+type CreateFrameworkParams struct {
+	Name       string
+	RootDir    string
+	OutputDir  string
+	BaseImage  string
+	InstallCmd string
+	BuildCmd   string
+	RunCmd     string
+}
+
+type UpdateFrameworkParams struct {
+	Id         string
 	Name       *string
 	RootDir    *string
 	OutputDir  *string
@@ -173,36 +185,15 @@ type FrameworkDTO struct {
 	RunCmd     *string
 }
 
-type CreateFrameworkDTO struct {
-	Name       *string
-	RootDir    *string
-	OutputDir  *string
-	BaseImage  *string
-	InstallCmd *string
-	BuildCmd   *string
-	RunCmd     *string
-}
-
-type UpdateFrameworkDTO struct {
-	Id         *string
-	Name       *string
-	RootDir    *string
-	OutputDir  *string
-	BaseImage  *string
-	InstallCmd *string
-	BuildCmd   *string
-	RunCmd     *string
-}
-
-func (p *FrameworkDTO) ToProto() *projectsv1.FrameworkResponse {
+func (p *Framework) ToProto() *projectsv1.FrameworkResponse {
 	return projectsv1.FrameworkResponse_builder{
-		Id:         p.Id,
-		Name:       p.Name,
-		RootDir:    p.RootDir,
-		OutputDir:  p.OutputDir,
-		BaseImage:  p.BaseImage,
-		InstallCmd: p.InstallCmd,
-		BuildCmd:   p.BuildCmd,
-		RunCmd:     p.RunCmd,
+		Id:         &p.Id,
+		Name:       &p.Name,
+		RootDir:    &p.RootDir,
+		OutputDir:  &p.OutputDir,
+		BaseImage:  &p.BaseImage,
+		InstallCmd: &p.InstallCmd,
+		BuildCmd:   &p.BuildCmd,
+		RunCmd:     &p.RunCmd,
 	}.Build()
 }

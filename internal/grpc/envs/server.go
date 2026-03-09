@@ -12,10 +12,10 @@ import (
 
 type envsServer struct {
 	projectsv1.UnimplementedEnvServiceServer
-	envs Envs
+	envs EnvsService
 }
 
-type Envs interface {
+type EnvsService interface {
 	GetEnvByGit(ctx context.Context, args *GetByGitParams) (*Env, error)
 	Get(ctx context.Context, id string) (*Env, error)
 	List(ctx context.Context, args *ListEnvParams) ([]*Env, error)
@@ -24,7 +24,7 @@ type Envs interface {
 	Delete(ctx context.Context, id string) error
 }
 
-func Register(grpcServer *grpc.Server, envs Envs) {
+func Register(grpcServer *grpc.Server, envs EnvsService) {
 	projectsv1.RegisterEnvServiceServer(grpcServer, &envsServer{envs: envs})
 }
 
@@ -134,7 +134,7 @@ func (s *envsServer) UpdateEnv(
 		return nil, status.Error(codes.InvalidArgument, "env ID is required")
 	}
 	id := req.GetId()
-	args := &UpdateEnvParams{Id: &id}
+	args := &UpdateEnvParams{Id: id}
 	if req.HasName() {
 		name := req.GetName()
 		args.Name = &name
@@ -187,7 +187,7 @@ type CreateEnvParams struct {
 }
 
 type UpdateEnvParams struct {
-	Id           *string
+	Id           string
 	Name         *string
 	TargetBranch *string
 	DomainName   *string
