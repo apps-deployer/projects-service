@@ -1,4 +1,4 @@
-module projects-service
+module github.com/apps-deployer/projects-service
 
 go 1.26.1
 
