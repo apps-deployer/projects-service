@@ -3,6 +3,7 @@ package envs
 import (
 	"context"
 
+	"github.com/apps-deployer/projects-service/internal/domain/models"
 	projectsv1 "github.com/apps-deployer/protos/gen/go/projects/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -16,11 +17,11 @@ type envsServer struct {
 }
 
 type EnvsService interface {
-	GetEnvByGit(ctx context.Context, args *GetByGitParams) (*Env, error)
-	Get(ctx context.Context, id string) (*Env, error)
-	List(ctx context.Context, args *ListEnvParams) ([]*Env, error)
-	Create(ctx context.Context, args *CreateEnvParams) (*Env, error)
-	Update(ctx context.Context, args *UpdateEnvParams) error
+	GetEnvByGit(ctx context.Context, args *models.GetByGitParams) (*models.Env, error)
+	Get(ctx context.Context, id string) (*models.Env, error)
+	List(ctx context.Context, args *models.ListEnvParams) ([]*models.Env, error)
+	Create(ctx context.Context, args *models.CreateEnvParams) (*models.Env, error)
+	Update(ctx context.Context, args *models.UpdateEnvParams) error
 	Delete(ctx context.Context, id string) error
 }
 
@@ -38,7 +39,7 @@ func (s *envsServer) GetEnvByGit(
 	if !req.HasTargetBranch() {
 		return nil, status.Error(codes.InvalidArgument, "target branch is required")
 	}
-	env, err := s.envs.GetEnvByGit(ctx, &GetByGitParams{
+	env, err := s.envs.GetEnvByGit(ctx, &models.GetByGitParams{
 		RepoUrl:      req.GetRepoUrl(),
 		TargetBranch: req.GetTargetBranch(),
 	})
@@ -77,7 +78,7 @@ func (s *envsServer) ListEnvs(
 	}
 	envs, err := s.envs.List(
 		ctx,
-		&ListEnvParams{
+		&models.ListEnvParams{
 			ProjectId: req.GetProjectId(),
 			Limit:     req.GetLimit(),
 			Offset:    req.GetOffset(),
@@ -113,7 +114,7 @@ func (s *envsServer) CreateEnv(
 	}
 	env, err := s.envs.Create(
 		ctx,
-		&CreateEnvParams{
+		&models.CreateEnvParams{
 			Name:         req.GetName(),
 			ProjectId:    req.GetProjectId(),
 			TargetBranch: req.GetTargetBranch(),
@@ -134,7 +135,7 @@ func (s *envsServer) UpdateEnv(
 		return nil, status.Error(codes.InvalidArgument, "env ID is required")
 	}
 	id := req.GetId()
-	args := &UpdateEnvParams{Id: id}
+	args := &models.UpdateEnvParams{Id: id}
 	if req.HasName() {
 		name := req.GetName()
 		args.Name = &name
@@ -164,47 +165,4 @@ func (s *envsServer) DeleteEnv(
 		return nil, status.Errorf(codes.Internal, "failed to delete env: %v", err)
 	}
 	return &emptypb.Empty{}, nil
-}
-
-type Env struct {
-	Id           string
-	Name         string
-	ProjectId    string
-	TargetBranch string
-	DomainName   string
-}
-
-type GetByGitParams struct {
-	RepoUrl      string
-	TargetBranch string
-}
-
-type CreateEnvParams struct {
-	Name         string
-	ProjectId    string
-	TargetBranch string
-	DomainName   string
-}
-
-type UpdateEnvParams struct {
-	Id           string
-	Name         *string
-	TargetBranch *string
-	DomainName   *string
-}
-
-type ListEnvParams struct {
-	ProjectId string
-	Limit     int64
-	Offset    int64
-}
-
-func (p *Env) ToProto() *projectsv1.EnvResponse {
-	return projectsv1.EnvResponse_builder{
-		Id:           &p.Id,
-		Name:         &p.Name,
-		ProjectId:    &p.ProjectId,
-		TargetBranch: &p.TargetBranch,
-		DomainName:   &p.DomainName,
-	}.Build()
 }

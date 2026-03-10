@@ -3,8 +3,8 @@ package projects
 import (
 	"context"
 
+	"github.com/apps-deployer/projects-service/internal/domain/models"
 	projectsv1 "github.com/apps-deployer/protos/gen/go/projects/v1"
-	"github.com/golang/protobuf/ptypes/timestamp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -17,10 +17,10 @@ type projectsServer struct {
 }
 
 type ProjectsService interface {
-	Get(ctx context.Context, id string) (*Project, error)
-	List(ctx context.Context, ownerId string) ([]*Project, error)
-	Create(ctx context.Context, project *CreateProjectParams) (*Project, error)
-	Update(ctx context.Context, project *UpdateProjectParams) error
+	Get(ctx context.Context, id string) (*models.Project, error)
+	List(ctx context.Context, ownerId string) ([]*models.Project, error)
+	Create(ctx context.Context, project *models.CreateProjectParams) (*models.Project, error)
+	Update(ctx context.Context, project *models.UpdateProjectParams) error
 	Delete(ctx context.Context, id string) error
 }
 
@@ -78,7 +78,7 @@ func (s *projectsServer) CreateProject(
 	if !req.HasDeployConfigTemplateId() {
 		return nil, status.Error(codes.InvalidArgument, "deploy config template is required")
 	}
-	project, err := s.projects.Create(ctx, &CreateProjectParams{
+	project, err := s.projects.Create(ctx, &models.CreateProjectParams{
 		Name:                   req.GetName(),
 		RepoUrl:                req.GetRepoUrl(),
 		OwnerId:                req.GetOwnerId(),
@@ -97,7 +97,7 @@ func (s *projectsServer) UpdateProject(
 	if !req.HasId() {
 		return nil, status.Error(codes.InvalidArgument, "project ID is required")
 	}
-	project := &UpdateProjectParams{Id: req.GetId()}
+	project := &models.UpdateProjectParams{Id: req.GetId()}
 	if req.HasName() {
 		name := req.GetName()
 		project.Name = &name
@@ -127,36 +127,4 @@ func (s *projectsServer) DeleteProject(
 		return nil, status.Errorf(codes.Internal, "failed to delete project: %v", err)
 	}
 	return &emptypb.Empty{}, nil
-}
-
-type Project struct {
-	Id        string
-	Name      string
-	RepoUrl   string
-	OwnerId   string
-	CreatedAt timestamp.Timestamp
-}
-
-type CreateProjectParams struct {
-	Name                   string
-	RepoUrl                string
-	OwnerId                string
-	DeployConfigTemplateId string
-}
-
-type UpdateProjectParams struct {
-	Id      string
-	Name    *string
-	RepoUrl *string
-	OwnerId *string
-}
-
-func (p *Project) ToProto() *projectsv1.ProjectResponse {
-	return projectsv1.ProjectResponse_builder{
-		Id:        &p.Id,
-		Name:      &p.Name,
-		RepoUrl:   &p.RepoUrl,
-		OwnerId:   &p.OwnerId,
-		CreatedAt: &p.CreatedAt,
-	}.Build()
 }

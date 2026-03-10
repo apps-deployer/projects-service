@@ -3,6 +3,7 @@ package vars
 import (
 	"context"
 
+	"github.com/apps-deployer/projects-service/internal/domain/models"
 	projectsv1 "github.com/apps-deployer/protos/gen/go/projects/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -16,18 +17,18 @@ type varsServer struct {
 }
 
 type VarsService interface {
-	GenerateVars(ctx context.Context, args *ListEnvVarsParams) ([]*Var, error)
+	GenerateVars(ctx context.Context, args *models.ListEnvVarsParams) ([]*models.Var, error)
 
-	GetProjectVar(ctx context.Context, id string) (*Var, error)
-	ListProjectVars(ctx context.Context, args *ListProjectVarsParams) ([]*Var, error)
-	CreateProjectVar(ctx context.Context, args *CreateProjectVarParams) (*Var, error)
-	UpdateProjectVar(ctx context.Context, args *UpdateVarParams) error
+	GetProjectVar(ctx context.Context, id string) (*models.Var, error)
+	ListProjectVars(ctx context.Context, args *models.ListProjectVarsParams) ([]*models.Var, error)
+	CreateProjectVar(ctx context.Context, args *models.CreateProjectVarParams) (*models.Var, error)
+	UpdateProjectVar(ctx context.Context, args *models.UpdateVarParams) error
 	DeleteProjectVar(ctx context.Context, id string) error
 
-	GetEnvVar(ctx context.Context, id string) (*Var, error)
-	ListEnvVars(ctx context.Context, args *ListEnvVarsParams) ([]*Var, error)
-	CreateEnvVar(ctx context.Context, args *CreateEnvVarParams) (*Var, error)
-	UpdateEnvVar(ctx context.Context, args *UpdateVarParams) error
+	GetEnvVar(ctx context.Context, id string) (*models.Var, error)
+	ListEnvVars(ctx context.Context, args *models.ListEnvVarsParams) ([]*models.Var, error)
+	CreateEnvVar(ctx context.Context, args *models.CreateEnvVarParams) (*models.Var, error)
+	UpdateEnvVar(ctx context.Context, args *models.UpdateVarParams) error
 	DeleteEnvVar(ctx context.Context, id string) error
 }
 
@@ -42,7 +43,7 @@ func (s *varsServer) ListVars(
 	if !req.HasEnvId() {
 		return nil, status.Error(codes.InvalidArgument, "env ID is required")
 	}
-	vars, err := s.vars.GenerateVars(ctx, &ListEnvVarsParams{
+	vars, err := s.vars.GenerateVars(ctx, &models.ListEnvVarsParams{
 		EnvId:  req.GetEnvId(),
 		Limit:  req.GetLimit(),
 		Offset: req.GetOffset(),
@@ -85,7 +86,7 @@ func (s *varsServer) ListProjectVars(
 	}
 	vars, err := s.vars.ListProjectVars(
 		ctx,
-		&ListProjectVarsParams{
+		&models.ListProjectVarsParams{
 			ProjectId: req.GetProjectId(),
 			Limit:     req.GetLimit(),
 			Offset:    req.GetOffset(),
@@ -118,7 +119,7 @@ func (s *varsServer) CreateProjectVar(
 	}
 	v, err := s.vars.CreateProjectVar(
 		ctx,
-		&CreateProjectVarParams{
+		&models.CreateProjectVarParams{
 			ProjectId: req.GetProjectId(),
 			Key:       req.GetKey(),
 			Value:     req.GetValue(),
@@ -142,7 +143,7 @@ func (s *varsServer) UpdateProjectVar(
 	}
 	err := s.vars.UpdateProjectVar(
 		ctx,
-		&UpdateVarParams{
+		&models.UpdateVarParams{
 			Id:    req.GetId(),
 			Value: req.GetValue(),
 		},
@@ -192,7 +193,7 @@ func (s *varsServer) ListEnvVars(
 	}
 	vars, err := s.vars.ListEnvVars(
 		ctx,
-		&ListEnvVarsParams{
+		&models.ListEnvVarsParams{
 			EnvId:  req.GetEnvId(),
 			Limit:  req.GetLimit(),
 			Offset: req.GetOffset(),
@@ -225,7 +226,7 @@ func (s *varsServer) CreateEnvVar(
 	}
 	v, err := s.vars.CreateEnvVar(
 		ctx,
-		&CreateEnvVarParams{
+		&models.CreateEnvVarParams{
 			EnvId: req.GetEnvId(),
 			Key:   req.GetKey(),
 			Value: req.GetValue(),
@@ -249,7 +250,7 @@ func (s *varsServer) UpdateEnvVar(
 	}
 	err := s.vars.UpdateEnvVar(
 		ctx,
-		&UpdateVarParams{
+		&models.UpdateVarParams{
 			Id:    req.GetId(),
 			Value: req.GetValue(),
 		},
@@ -271,47 +272,4 @@ func (s *varsServer) DeleteEnvVar(
 		return nil, status.Errorf(codes.Internal, "failed to delete var: %v", err)
 	}
 	return &emptypb.Empty{}, nil
-}
-
-type Var struct {
-	Id    string
-	Key   string
-	Value string
-}
-
-type ListProjectVarsParams struct {
-	ProjectId string
-	Limit     int64
-	Offset    int64
-}
-
-type ListEnvVarsParams struct {
-	EnvId  string
-	Limit  int64
-	Offset int64
-}
-
-type CreateProjectVarParams struct {
-	ProjectId string
-	Key       string
-	Value     string
-}
-
-type CreateEnvVarParams struct {
-	EnvId string
-	Key   string
-	Value string
-}
-
-type UpdateVarParams struct {
-	Id    string
-	Value string
-}
-
-func (p *Var) ToProto() *projectsv1.VarResponse {
-	return projectsv1.VarResponse_builder{
-		Id:    &p.Id,
-		Key:   &p.Key,
-		Value: &p.Value,
-	}.Build()
 }
