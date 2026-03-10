@@ -42,24 +42,18 @@ func (s *projectsServer) GetProject(
 	if project == nil {
 		return nil, status.Error(codes.NotFound, "project not found")
 	}
-	return newProjectResponse(project), nil
+	return projectToProto(project), nil
 }
 
 func (s *projectsServer) ListProjects(
 	ctx context.Context,
 	req *projectsv1.ListProjectsRequest,
 ) (*projectsv1.ListProjectsResponse, error) {
-	projects, err := s.projects.List(ctx, newListProjectsParams(req))
+	projects, err := s.projects.List(ctx, protoToListProjectsParams(req))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list projects: %v", err)
 	}
-	projectsResp := make([]*projectsv1.ProjectResponse, len(projects))
-	for i, project := range projects {
-		projectsResp[i] = newProjectResponse(project)
-	}
-	return projectsv1.ListProjectsResponse_builder{
-		Projects: projectsResp,
-	}.Build(), nil
+	return projectsToProto(projects), nil
 }
 
 func (s *projectsServer) CreateProject(
@@ -78,11 +72,11 @@ func (s *projectsServer) CreateProject(
 	if !req.HasDeployConfigTemplateId() {
 		return nil, status.Error(codes.InvalidArgument, "deploy config template is required")
 	}
-	project, err := s.projects.Create(ctx, newCreateProjectsParams(req))
+	project, err := s.projects.Create(ctx, protoToCreateProjectsParams(req))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create project: %v", err)
 	}
-	return newProjectResponse(project), nil
+	return projectToProto(project), nil
 }
 
 func (s *projectsServer) UpdateProject(
@@ -92,7 +86,7 @@ func (s *projectsServer) UpdateProject(
 	if !req.HasId() {
 		return nil, status.Error(codes.InvalidArgument, "project ID is required")
 	}
-	if err := s.projects.Update(ctx, newUpdateProjectParams(req)); err != nil {
+	if err := s.projects.Update(ctx, protoToUpdateProjectParams(req)); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update project: %v", err)
 	}
 	return &emptypb.Empty{}, nil
@@ -109,48 +103,4 @@ func (s *projectsServer) DeleteProject(
 		return nil, status.Errorf(codes.Internal, "failed to delete project: %v", err)
 	}
 	return &emptypb.Empty{}, nil
-}
-
-func newProjectResponse(p *models.Project) *projectsv1.ProjectResponse {
-	return projectsv1.ProjectResponse_builder{
-		Id:        &p.Id,
-		Name:      &p.Name,
-		RepoUrl:   &p.RepoUrl,
-		OwnerId:   &p.OwnerId,
-		CreatedAt: &p.CreatedAt,
-	}.Build()
-}
-
-func newListProjectsParams(req *projectsv1.ListProjectsRequest) *models.ListProjectsParams {
-	return &models.ListProjectsParams{
-		OwnerId: req.GetOwnerId(),
-		Limit:   req.GetLimit(),
-		Offset:  req.GetOffset(),
-	}
-}
-
-func newCreateProjectsParams(req *projectsv1.CreateProjectRequest) *models.CreateProjectParams {
-	return &models.CreateProjectParams{
-		Name:                   req.GetName(),
-		RepoUrl:                req.GetRepoUrl(),
-		OwnerId:                req.GetOwnerId(),
-		DeployConfigTemplateId: req.GetDeployConfigTemplateId(),
-	}
-}
-
-func newUpdateProjectParams(req *projectsv1.UpdateProjectRequest) *models.UpdateProjectParams {
-	project := &models.UpdateProjectParams{Id: req.GetId()}
-	if req.HasName() {
-		name := req.GetName()
-		project.Name = &name
-	}
-	if req.HasRepoUrl() {
-		repoUrl := req.GetRepoUrl()
-		project.RepoUrl = &repoUrl
-	}
-	if req.HasOwnerId() {
-		ownerId := req.GetOwnerId()
-		project.OwnerId = &ownerId
-	}
-	return project
 }

@@ -46,7 +46,7 @@ func (s *frameworksServer) GetFramework(
 	if framework == nil {
 		return nil, status.Error(codes.NotFound, "framework not found")
 	}
-	return newFrameworkResponse(framework), nil
+	return frameworkToProto(framework), nil
 }
 
 func (s *frameworksServer) ListFrameworks(
@@ -55,18 +55,12 @@ func (s *frameworksServer) ListFrameworks(
 ) (*projectsv1.ListFrameworksResponse, error) {
 	frameworks, err := s.frameworks.List(
 		ctx,
-		newListFrameworksParams(req),
+		protoToListFrameworksParams(req),
 	)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list frameworks: %v", err)
 	}
-	frameworksResponse := make([]*projectsv1.FrameworkResponse, len(frameworks))
-	for i, f := range frameworks {
-		frameworksResponse[i] = newFrameworkResponse(f)
-	}
-	return projectsv1.ListFrameworksResponse_builder{
-		Frameworks: frameworksResponse,
-	}.Build(), nil
+	return frameworksToProto(frameworks), nil
 }
 
 func (s *frameworksServer) CreateFramework(
@@ -82,11 +76,11 @@ func (s *frameworksServer) CreateFramework(
 	if !req.HasRunCmd() {
 		return nil, status.Error(codes.InvalidArgument, "framework run command is required")
 	}
-	framework, err := s.frameworks.Create(ctx, newCreateFrameworkParams(req))
+	framework, err := s.frameworks.Create(ctx, protoToCreateFrameworkParams(req))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create framework: %v", err)
 	}
-	return newFrameworkResponse(framework), nil
+	return frameworkToProto(framework), nil
 }
 
 func (s *frameworksServer) UpdateFramework(
@@ -96,7 +90,7 @@ func (s *frameworksServer) UpdateFramework(
 	if !req.HasId() {
 		return nil, status.Error(codes.InvalidArgument, "framework ID is required")
 	}
-	args := newUpdateFrameworkParams(req)
+	args := protoToUpdateFrameworkParams(req)
 	if err := s.frameworks.Update(ctx, args); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update framework: %v", err)
 	}
@@ -114,69 +108,4 @@ func (s *frameworksServer) DeleteFramework(
 		return nil, status.Errorf(codes.Internal, "failed to delete framework: %v", err)
 	}
 	return &emptypb.Empty{}, nil
-}
-
-func newFrameworkResponse(f *models.Framework) *projectsv1.FrameworkResponse {
-	return projectsv1.FrameworkResponse_builder{
-		Id:         &f.Id,
-		Name:       &f.Name,
-		RootDir:    &f.RootDir,
-		OutputDir:  &f.OutputDir,
-		BaseImage:  &f.BaseImage,
-		InstallCmd: &f.InstallCmd,
-		BuildCmd:   &f.BuildCmd,
-		RunCmd:     &f.RunCmd,
-	}.Build()
-}
-
-func newListFrameworksParams(req *projectsv1.ListFrameworksRequest) *models.ListFrameworksParams {
-	return &models.ListFrameworksParams{
-		Limit:  req.GetLimit(),
-		Offset: req.GetOffset(),
-	}
-}
-
-func newCreateFrameworkParams(req *projectsv1.CreateFrameworkRequest) *models.CreateFrameworkParams {
-	return &models.CreateFrameworkParams{
-		Name:       req.GetName(),
-		RootDir:    req.GetRootDir(),
-		OutputDir:  req.GetOutputDir(),
-		BaseImage:  req.GetBaseImage(),
-		InstallCmd: req.GetInstallCmd(),
-		BuildCmd:   req.GetBuildCmd(),
-		RunCmd:     req.GetRunCmd(),
-	}
-}
-
-func newUpdateFrameworkParams(req *projectsv1.UpdateFrameworkRequest) *models.UpdateFrameworkParams {
-	framework := &models.UpdateFrameworkParams{Id: req.GetId()}
-	if req.HasName() {
-		name := req.GetName()
-		framework.Name = &name
-	}
-	if req.HasRootDir() {
-		rootDir := req.GetRootDir()
-		framework.RootDir = &rootDir
-	}
-	if req.HasOutputDir() {
-		outputDir := req.GetOutputDir()
-		framework.OutputDir = &outputDir
-	}
-	if req.HasBaseImage() {
-		baseImage := req.GetBaseImage()
-		framework.BaseImage = &baseImage
-	}
-	if req.HasInstallCmd() {
-		installCmd := req.GetInstallCmd()
-		framework.InstallCmd = &installCmd
-	}
-	if req.HasBuildCmd() {
-		buildCmd := req.GetBuildCmd()
-		framework.BuildCmd = &buildCmd
-	}
-	if req.HasRunCmd() {
-		runCmd := req.GetRunCmd()
-		framework.RunCmd = &runCmd
-	}
-	return framework
 }

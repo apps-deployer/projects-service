@@ -43,7 +43,7 @@ func (s *deployConfigsServer) GenerateDeployConfig(
 	if config == nil {
 		return nil, status.Error(codes.NotFound, "project not found")
 	}
-	return newGenerateDeployConfigResponse(config), nil
+	return generatedDeployConfigToProto(config), nil
 }
 
 func (s *deployConfigsServer) GetDeployConfig(
@@ -60,7 +60,7 @@ func (s *deployConfigsServer) GetDeployConfig(
 	if config == nil {
 		return nil, status.Error(codes.NotFound, "project not found")
 	}
-	return newDeployConfigResponse(config), nil
+	return deployConfigToProto(config), nil
 }
 
 func (s *deployConfigsServer) UpdateDeployConfig(
@@ -70,68 +70,8 @@ func (s *deployConfigsServer) UpdateDeployConfig(
 	if !req.HasId() {
 		return nil, status.Error(codes.InvalidArgument, "deploy config ID is required")
 	}
-	if err := s.deployConfigs.Update(ctx, newUpdateDeployConfigParams(req)); err != nil {
+	if err := s.deployConfigs.Update(ctx, protoToUpdateDeployConfigParams(req)); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update deploy config: %v", err)
 	}
 	return &emptypb.Empty{}, nil
-}
-
-func newDeployConfigResponse(c *models.DeployConfig) *projectsv1.DeployConfigResponse {
-	return projectsv1.DeployConfigResponse_builder{
-		Id:                  &c.Id,
-		ProjectId:           &c.ProjectId,
-		FrameworkId:         &c.FrameworkId,
-		RootDirOverwrite:    &c.RootDirOverwrite,
-		OutputDirOverwrite:  &c.OutputDirOverwrite,
-		BaseImageOverwrite:  &c.BaseImageOverwrite,
-		InstallCmdOverwrite: &c.InstallCmdOverwrite,
-		BuildCmdOverwrite:   &c.BuildCmdOverwrite,
-		RunCmdOverwrite:     &c.RunCmdOverwrite,
-	}.Build()
-}
-
-func newGenerateDeployConfigResponse(c *models.GeneratedDeployConfig) *projectsv1.GenerateDeployConfigResponse {
-	return projectsv1.GenerateDeployConfigResponse_builder{
-		Id:         &c.Id,
-		ProjectId:  &c.ProjectId,
-		RootDir:    &c.RootDir,
-		OutputDir:  &c.OutputDir,
-		BaseImage:  &c.BaseImage,
-		InstallCmd: &c.InstallCmd,
-		BuildCmd:   &c.BuildCmd,
-		RunCmd:     &c.RunCmd,
-	}.Build()
-}
-
-func newUpdateDeployConfigParams(req *projectsv1.UpdateDeployConfigRequest) *models.UpdateDeployConfigParams {
-	config := &models.UpdateDeployConfigParams{Id: req.GetId()}
-	if req.HasFrameworkId() {
-		frameworkId := req.GetFrameworkId()
-		config.FrameworkId = &frameworkId
-	}
-	if req.HasRootDirOverwrite() {
-		rootDir := req.GetRootDirOverwrite()
-		config.RootDirOverwrite = &rootDir
-	}
-	if req.HasOutputDirOverwrite() {
-		outputDir := req.GetOutputDirOverwrite()
-		config.OutputDirOverwrite = &outputDir
-	}
-	if req.HasBaseImageOverwrite() {
-		baseImage := req.GetBaseImageOverwrite()
-		config.BaseImageOverwrite = &baseImage
-	}
-	if req.HasInstallCmdOverwrite() {
-		installCmd := req.GetInstallCmdOverwrite()
-		config.InstallCmdOverwrite = &installCmd
-	}
-	if req.HasBuildCmdOverwrite() {
-		buildCmd := req.GetBuildCmdOverwrite()
-		config.BuildCmdOverwrite = &buildCmd
-	}
-	if req.HasRunCmdOverwrite() {
-		runCmd := req.GetRunCmdOverwrite()
-		config.RunCmdOverwrite = &runCmd
-	}
-	return config
 }
