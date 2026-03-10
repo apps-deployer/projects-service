@@ -17,7 +17,7 @@ type envsServer struct {
 }
 
 type EnvsService interface {
-	GetEnvByGit(ctx context.Context, args *models.GetByGitParams) (*models.Env, error)
+	GetEnvByGit(ctx context.Context, args *models.GetEnvByGitParams) (*models.Env, error)
 	Get(ctx context.Context, id string) (*models.Env, error)
 	List(ctx context.Context, args *models.ListEnvParams) ([]*models.Env, error)
 	Create(ctx context.Context, args *models.CreateEnvParams) (*models.Env, error)
@@ -39,17 +39,14 @@ func (s *envsServer) GetEnvByGit(
 	if !req.HasTargetBranch() {
 		return nil, status.Error(codes.InvalidArgument, "target branch is required")
 	}
-	env, err := s.envs.GetEnvByGit(ctx, &models.GetByGitParams{
-		RepoUrl:      req.GetRepoUrl(),
-		TargetBranch: req.GetTargetBranch(),
-	})
+	env, err := s.envs.GetEnvByGit(ctx, newGetEnvByGitParams(req))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get env: %v", err)
 	}
 	if env == nil {
 		return nil, status.Error(codes.NotFound, "env not found")
 	}
-	return env.ToProto(), nil
+	return newEnvResponse(env), nil
 }
 
 func (s *envsServer) GetEnv(
@@ -66,7 +63,7 @@ func (s *envsServer) GetEnv(
 	if env == nil {
 		return nil, status.Error(codes.NotFound, "env not found")
 	}
-	return env.ToProto(), nil
+	return newEnvResponse(env), nil
 }
 
 func (s *envsServer) ListEnvs(
@@ -78,18 +75,14 @@ func (s *envsServer) ListEnvs(
 	}
 	envs, err := s.envs.List(
 		ctx,
-		&models.ListEnvParams{
-			ProjectId: req.GetProjectId(),
-			Limit:     req.GetLimit(),
-			Offset:    req.GetOffset(),
-		},
+		newListEnvParams(req),
 	)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list envs: %v", err)
 	}
 	envsResp := make([]*projectsv1.EnvResponse, len(envs))
 	for i, env := range envs {
-		envsResp[i] = env.ToProto()
+		envsResp[i] = newEnvResponse(env)
 	}
 	return projectsv1.ListEnvsResponse_builder{
 		Envs: envsResp,
@@ -112,19 +105,11 @@ func (s *envsServer) CreateEnv(
 	if !req.HasDomainName() {
 		return nil, status.Error(codes.InvalidArgument, "env domain name is required")
 	}
-	env, err := s.envs.Create(
-		ctx,
-		&models.CreateEnvParams{
-			Name:         req.GetName(),
-			ProjectId:    req.GetProjectId(),
-			TargetBranch: req.GetTargetBranch(),
-			DomainName:   req.GetDomainName(),
-		},
-	)
+	env, err := s.envs.Create(ctx, newCreateEnvParams(req))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create env: %v", err)
 	}
-	return env.ToProto(), nil
+	return newEnvResponse(env), nil
 }
 
 func (s *envsServer) UpdateEnv(
@@ -134,21 +119,8 @@ func (s *envsServer) UpdateEnv(
 	if !req.HasId() {
 		return nil, status.Error(codes.InvalidArgument, "env ID is required")
 	}
-	id := req.GetId()
-	args := &models.UpdateEnvParams{Id: id}
-	if req.HasName() {
-		name := req.GetName()
-		args.Name = &name
-	}
-	if req.HasTargetBranch() {
-		targetBranch := req.GetTargetBranch()
-		args.TargetBranch = &targetBranch
-	}
-	if req.HasDomainName() {
-		domainName := req.GetDomainName()
-		args.DomainName = &domainName
-	}
-	if err := s.envs.Update(ctx, args); err != nil {
+
+	if err := s.envs.Update(ctx, newUpdateEnvParams(req)); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update env: %v", err)
 	}
 	return &emptypb.Empty{}, nil
@@ -165,4 +137,55 @@ func (s *envsServer) DeleteEnv(
 		return nil, status.Errorf(codes.Internal, "failed to delete env: %v", err)
 	}
 	return &emptypb.Empty{}, nil
+}
+
+func newEnvResponse(e *models.Env) *projectsv1.EnvResponse {
+	return projectsv1.EnvResponse_builder{
+		Id:           &e.Id,
+		Name:         &e.Name,
+		ProjectId:    &e.ProjectId,
+		TargetBranch: &e.TargetBranch,
+		DomainName:   &e.DomainName,
+	}.Build()
+}
+
+func newGetEnvByGitParams(req *projectsv1.GetEnvByGitRequest) *models.GetEnvByGitParams {
+	return &models.GetEnvByGitParams{
+		RepoUrl:      req.GetRepoUrl(),
+		TargetBranch: req.GetTargetBranch(),
+	}
+}
+
+func newListEnvParams(req *projectsv1.ListEnvsRequest) *models.ListEnvParams {
+	return &models.ListEnvParams{
+		ProjectId: req.GetProjectId(),
+		Limit:     req.GetLimit(),
+		Offset:    req.GetOffset(),
+	}
+}
+
+func newCreateEnvParams(req *projectsv1.CreateEnvRequest) *models.CreateEnvParams {
+	return &models.CreateEnvParams{
+		Name:         req.GetName(),
+		ProjectId:    req.GetProjectId(),
+		TargetBranch: req.GetTargetBranch(),
+		DomainName:   req.GetDomainName(),
+	}
+}
+
+func newUpdateEnvParams(req *projectsv1.UpdateEnvRequest) *models.UpdateEnvParams {
+	env := &models.UpdateEnvParams{Id: req.GetId()}
+	if req.HasName() {
+		name := req.GetName()
+		env.Name = &name
+	}
+	if req.HasTargetBranch() {
+		targetBranch := req.GetTargetBranch()
+		env.TargetBranch = &targetBranch
+	}
+	if req.HasDomainName() {
+		domainName := req.GetDomainName()
+		env.DomainName = &domainName
+	}
+	return env
 }

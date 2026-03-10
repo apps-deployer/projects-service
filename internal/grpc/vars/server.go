@@ -43,21 +43,11 @@ func (s *varsServer) ListVars(
 	if !req.HasEnvId() {
 		return nil, status.Error(codes.InvalidArgument, "env ID is required")
 	}
-	vars, err := s.vars.GenerateVars(ctx, &models.ListEnvVarsParams{
-		EnvId:  req.GetEnvId(),
-		Limit:  req.GetLimit(),
-		Offset: req.GetOffset(),
-	})
+	vars, err := s.vars.GenerateVars(ctx, newListEnvVarsParams(req))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list vars: %v", err)
 	}
-	varsResp := make([]*projectsv1.VarResponse, len(vars))
-	for i, v := range vars {
-		varsResp[i] = v.ToProto()
-	}
-	return projectsv1.ListVarsResponse_builder{
-		Vars: varsResp,
-	}.Build(), nil
+	return newListVarsResponse(vars), nil
 }
 
 func (s *varsServer) GetProjectVar(
@@ -74,7 +64,7 @@ func (s *varsServer) GetProjectVar(
 	if v == nil {
 		return nil, status.Error(codes.NotFound, "var not found")
 	}
-	return v.ToProto(), nil
+	return newVarResponse(v), nil
 }
 
 func (s *varsServer) ListProjectVars(
@@ -84,24 +74,11 @@ func (s *varsServer) ListProjectVars(
 	if !req.HasProjectId() {
 		return nil, status.Error(codes.InvalidArgument, "project ID is required")
 	}
-	vars, err := s.vars.ListProjectVars(
-		ctx,
-		&models.ListProjectVarsParams{
-			ProjectId: req.GetProjectId(),
-			Limit:     req.GetLimit(),
-			Offset:    req.GetOffset(),
-		},
-	)
+	vars, err := s.vars.ListProjectVars(ctx, newListProjectVarsParams(req))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list project vars: %v", err)
 	}
-	varsResp := make([]*projectsv1.VarResponse, len(vars))
-	for i, v := range vars {
-		varsResp[i] = v.ToProto()
-	}
-	return projectsv1.ListVarsResponse_builder{
-		Vars: varsResp,
-	}.Build(), nil
+	return newListVarsResponse(vars), nil
 }
 
 func (s *varsServer) CreateProjectVar(
@@ -117,18 +94,11 @@ func (s *varsServer) CreateProjectVar(
 	if !req.HasValue() {
 		return nil, status.Error(codes.InvalidArgument, "value is required")
 	}
-	v, err := s.vars.CreateProjectVar(
-		ctx,
-		&models.CreateProjectVarParams{
-			ProjectId: req.GetProjectId(),
-			Key:       req.GetKey(),
-			Value:     req.GetValue(),
-		},
-	)
+	v, err := s.vars.CreateProjectVar(ctx, newCreateProjectVarParams(req))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create env: %v", err)
 	}
-	return v.ToProto(), nil
+	return newVarResponse(v), nil
 }
 
 func (s *varsServer) UpdateProjectVar(
@@ -141,13 +111,7 @@ func (s *varsServer) UpdateProjectVar(
 	if !req.HasValue() {
 		return nil, status.Error(codes.InvalidArgument, "value is required")
 	}
-	err := s.vars.UpdateProjectVar(
-		ctx,
-		&models.UpdateVarParams{
-			Id:    req.GetId(),
-			Value: req.GetValue(),
-		},
-	)
+	err := s.vars.UpdateProjectVar(ctx, newUpdateVarParams(req))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update var: %v", err)
 	}
@@ -181,7 +145,7 @@ func (s *varsServer) GetEnvVar(
 	if v == nil {
 		return nil, status.Error(codes.NotFound, "var not found")
 	}
-	return v.ToProto(), nil
+	return newVarResponse(v), nil
 }
 
 func (s *varsServer) ListEnvVars(
@@ -191,24 +155,11 @@ func (s *varsServer) ListEnvVars(
 	if !req.HasEnvId() {
 		return nil, status.Error(codes.InvalidArgument, "env ID is required")
 	}
-	vars, err := s.vars.ListEnvVars(
-		ctx,
-		&models.ListEnvVarsParams{
-			EnvId:  req.GetEnvId(),
-			Limit:  req.GetLimit(),
-			Offset: req.GetOffset(),
-		},
-	)
+	vars, err := s.vars.ListEnvVars(ctx, newListEnvVarsParams(req))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list env vars: %v", err)
 	}
-	varsResp := make([]*projectsv1.VarResponse, len(vars))
-	for i, v := range vars {
-		varsResp[i] = v.ToProto()
-	}
-	return projectsv1.ListVarsResponse_builder{
-		Vars: varsResp,
-	}.Build(), nil
+	return newListVarsResponse(vars), nil
 }
 
 func (s *varsServer) CreateEnvVar(
@@ -224,18 +175,11 @@ func (s *varsServer) CreateEnvVar(
 	if !req.HasValue() {
 		return nil, status.Error(codes.InvalidArgument, "value is required")
 	}
-	v, err := s.vars.CreateEnvVar(
-		ctx,
-		&models.CreateEnvVarParams{
-			EnvId: req.GetEnvId(),
-			Key:   req.GetKey(),
-			Value: req.GetValue(),
-		},
-	)
+	v, err := s.vars.CreateEnvVar(ctx, newCreateEnvVarParams(req))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create env: %v", err)
 	}
-	return v.ToProto(), nil
+	return newVarResponse(v), nil
 }
 
 func (s *varsServer) UpdateEnvVar(
@@ -248,13 +192,7 @@ func (s *varsServer) UpdateEnvVar(
 	if !req.HasValue() {
 		return nil, status.Error(codes.InvalidArgument, "value is required")
 	}
-	err := s.vars.UpdateEnvVar(
-		ctx,
-		&models.UpdateVarParams{
-			Id:    req.GetId(),
-			Value: req.GetValue(),
-		},
-	)
+	err := s.vars.UpdateEnvVar(ctx, newUpdateVarParams(req))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update var: %v", err)
 	}
@@ -272,4 +210,63 @@ func (s *varsServer) DeleteEnvVar(
 		return nil, status.Errorf(codes.Internal, "failed to delete var: %v", err)
 	}
 	return &emptypb.Empty{}, nil
+}
+
+func newListVarsResponse(vars []*models.Var) *projectsv1.ListVarsResponse {
+	varsResp := make([]*projectsv1.VarResponse, len(vars))
+	for i, v := range vars {
+		varsResp[i] = newVarResponse(v)
+	}
+	return projectsv1.ListVarsResponse_builder{
+		Vars: varsResp,
+	}.Build()
+}
+
+func newVarResponse(v *models.Var) *projectsv1.VarResponse {
+	return projectsv1.VarResponse_builder{
+		Id:    &v.Id,
+		Key:   &v.Key,
+		Value: &v.Value,
+	}.Build()
+}
+
+func newListProjectVarsParams(req *projectsv1.ListProjectVarsRequest) *models.ListProjectVarsParams {
+	return &models.ListProjectVarsParams{
+		ProjectId: req.GetProjectId(),
+		Limit:     req.GetLimit(),
+		Offset:    req.GetOffset(),
+	}
+}
+
+func newCreateProjectVarParams(req *projectsv1.CreateProjectVarRequest) *models.CreateProjectVarParams {
+	return &models.CreateProjectVarParams{
+		ProjectId: req.GetProjectId(),
+		Key:       req.GetKey(),
+		Value:     req.GetValue(),
+	}
+}
+
+func newListEnvVarsParams(req *projectsv1.ListEnvVarsRequest) *models.ListEnvVarsParams {
+	return &models.ListEnvVarsParams{
+		EnvId:  req.GetEnvId(),
+		Limit:  req.GetLimit(),
+		Offset: req.GetOffset(),
+	}
+}
+
+func newCreateEnvVarParams(req *projectsv1.CreateEnvVarRequest) *models.CreateEnvVarParams {
+	return &models.CreateEnvVarParams{
+		EnvId: req.GetEnvId(),
+		Key:   req.GetKey(),
+		Value: req.GetValue(),
+	}
+}
+
+func newUpdateVarParams(req *projectsv1.UpdateVarRequest) *models.UpdateVarParams {
+	v := &models.UpdateVarParams{Id: req.GetId()}
+	if req.HasValue() {
+		value := req.GetValue()
+		v.Value = &value
+	}
+	return v
 }

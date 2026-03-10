@@ -1,7 +1,5 @@
 package models
 
-import projectsv1 "github.com/apps-deployer/protos/gen/go/projects/v1"
-
 type Framework struct {
 	Id         string
 	Name       string
@@ -11,6 +9,11 @@ type Framework struct {
 	InstallCmd string
 	BuildCmd   string
 	RunCmd     string
+}
+
+type ListFrameworksParams struct {
+	Limit  int64
+	Offset int64
 }
 
 type CreateFrameworkParams struct {
@@ -32,17 +35,4 @@ type UpdateFrameworkParams struct {
 	InstallCmd *string
 	BuildCmd   *string
 	RunCmd     *string
-}
-
-func (p *Framework) ToProto() *projectsv1.FrameworkResponse {
-	return projectsv1.FrameworkResponse_builder{
-		Id:         &p.Id,
-		Name:       &p.Name,
-		RootDir:    &p.RootDir,
-		OutputDir:  &p.OutputDir,
-		BaseImage:  &p.BaseImage,
-		InstallCmd: &p.InstallCmd,
-		BuildCmd:   &p.BuildCmd,
-		RunCmd:     &p.RunCmd,
-	}.Build()
 }
