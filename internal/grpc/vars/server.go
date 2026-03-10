@@ -13,37 +13,55 @@ import (
 
 type varsServer struct {
 	projectsv1.UnimplementedVarServiceServer
-	vars VarsService
+	projectVars    ProjectVarsService
+	envVars        EnvVarsService
+	varsAggregator VarsAggregationService
 }
 
-type VarsService interface {
-	GenerateVars(ctx context.Context, args *models.ListEnvVarsParams) ([]*models.Var, error)
-
-	GetProjectVar(ctx context.Context, id string) (*models.Var, error)
-	ListProjectVars(ctx context.Context, args *models.ListProjectVarsParams) ([]*models.Var, error)
-	CreateProjectVar(ctx context.Context, args *models.CreateProjectVarParams) (*models.Var, error)
-	UpdateProjectVar(ctx context.Context, args *models.UpdateVarParams) error
-	DeleteProjectVar(ctx context.Context, id string) error
-
-	GetEnvVar(ctx context.Context, id string) (*models.Var, error)
-	ListEnvVars(ctx context.Context, args *models.ListEnvVarsParams) ([]*models.Var, error)
-	CreateEnvVar(ctx context.Context, args *models.CreateEnvVarParams) (*models.Var, error)
-	UpdateEnvVar(ctx context.Context, args *models.UpdateVarParams) error
-	DeleteEnvVar(ctx context.Context, id string) error
+type ProjectVarsService interface {
+	Get(ctx context.Context, id string) (*models.Var, error)
+	List(ctx context.Context, args *models.ListProjectVarsParams) ([]*models.Var, error)
+	Create(ctx context.Context, args *models.CreateProjectVarParams) (*models.Var, error)
+	Update(ctx context.Context, args *models.UpdateVarParams) error
+	Delete(ctx context.Context, id string) error
 }
 
-func Register(grpcServer *grpc.Server, vars VarsService) {
-	projectsv1.RegisterVarServiceServer(grpcServer, &varsServer{vars: vars})
+type EnvVarsService interface {
+	Get(ctx context.Context, id string) (*models.Var, error)
+	List(ctx context.Context, args *models.ListEnvVarsParams) ([]*models.Var, error)
+	Create(ctx context.Context, args *models.CreateEnvVarParams) (*models.Var, error)
+	Update(ctx context.Context, args *models.UpdateVarParams) error
+	Delete(ctx context.Context, id string) error
 }
 
-func (s *varsServer) ListVars(
+type VarsAggregationService interface {
+	ListAllVars(ctx context.Context, envId string) ([]*models.Var, error)
+}
+
+func Register(
+	grpcServer *grpc.Server,
+	projectVars ProjectVarsService,
+	envVars EnvVarsService,
+	varsAggregator VarsAggregationService,
+) {
+	projectsv1.RegisterVarServiceServer(
+		grpcServer,
+		&varsServer{
+			projectVars:    projectVars,
+			envVars:        envVars,
+			varsAggregator: varsAggregator,
+		},
+	)
+}
+
+func (s *varsServer) ListAllVars(
 	ctx context.Context,
-	req *projectsv1.ListEnvVarsRequest,
+	req *projectsv1.ListAllVarsRequest,
 ) (*projectsv1.ListVarsResponse, error) {
 	if !req.HasEnvId() {
 		return nil, status.Error(codes.InvalidArgument, "env ID is required")
 	}
-	vars, err := s.vars.GenerateVars(ctx, protoToListEnvVarsParams(req))
+	vars, err := s.varsAggregator.ListAllVars(ctx, req.GetEnvId())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list vars: %v", err)
 	}
@@ -57,7 +75,7 @@ func (s *varsServer) GetProjectVar(
 	if !req.HasId() {
 		return nil, status.Error(codes.InvalidArgument, "var ID is required")
 	}
-	v, err := s.vars.GetProjectVar(ctx, req.GetId())
+	v, err := s.projectVars.Get(ctx, req.GetId())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get var: %v", err)
 	}
@@ -74,7 +92,7 @@ func (s *varsServer) ListProjectVars(
 	if !req.HasProjectId() {
 		return nil, status.Error(codes.InvalidArgument, "project ID is required")
 	}
-	vars, err := s.vars.ListProjectVars(ctx, protoToListProjectVarsParams(req))
+	vars, err := s.projectVars.List(ctx, protoToListProjectVarsParams(req))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list project vars: %v", err)
 	}
@@ -94,7 +112,7 @@ func (s *varsServer) CreateProjectVar(
 	if !req.HasValue() {
 		return nil, status.Error(codes.InvalidArgument, "value is required")
 	}
-	v, err := s.vars.CreateProjectVar(ctx, protoToCreateProjectVarParams(req))
+	v, err := s.projectVars.Create(ctx, protoToCreateProjectVarParams(req))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create env: %v", err)
 	}
@@ -111,7 +129,7 @@ func (s *varsServer) UpdateProjectVar(
 	if !req.HasValue() {
 		return nil, status.Error(codes.InvalidArgument, "value is required")
 	}
-	err := s.vars.UpdateProjectVar(ctx, protoToUpdateVarParams(req))
+	err := s.projectVars.Update(ctx, protoToUpdateVarParams(req))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update var: %v", err)
 	}
@@ -125,7 +143,7 @@ func (s *varsServer) DeleteProjectVar(
 	if !req.HasId() {
 		return nil, status.Error(codes.InvalidArgument, "var ID is required")
 	}
-	if err := s.vars.DeleteProjectVar(ctx, req.GetId()); err != nil {
+	if err := s.projectVars.Delete(ctx, req.GetId()); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete var: %v", err)
 	}
 	return &emptypb.Empty{}, nil
@@ -138,7 +156,7 @@ func (s *varsServer) GetEnvVar(
 	if !req.HasId() {
 		return nil, status.Error(codes.InvalidArgument, "var ID is required")
 	}
-	v, err := s.vars.GetEnvVar(ctx, req.GetId())
+	v, err := s.envVars.Get(ctx, req.GetId())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get var: %v", err)
 	}
@@ -155,7 +173,7 @@ func (s *varsServer) ListEnvVars(
 	if !req.HasEnvId() {
 		return nil, status.Error(codes.InvalidArgument, "env ID is required")
 	}
-	vars, err := s.vars.ListEnvVars(ctx, protoToListEnvVarsParams(req))
+	vars, err := s.envVars.List(ctx, protoToListEnvVarsParams(req))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list env vars: %v", err)
 	}
@@ -175,7 +193,7 @@ func (s *varsServer) CreateEnvVar(
 	if !req.HasValue() {
 		return nil, status.Error(codes.InvalidArgument, "value is required")
 	}
-	v, err := s.vars.CreateEnvVar(ctx, protoToCreateEnvVarParams(req))
+	v, err := s.envVars.Create(ctx, protoToCreateEnvVarParams(req))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create env: %v", err)
 	}
@@ -192,7 +210,7 @@ func (s *varsServer) UpdateEnvVar(
 	if !req.HasValue() {
 		return nil, status.Error(codes.InvalidArgument, "value is required")
 	}
-	err := s.vars.UpdateEnvVar(ctx, protoToUpdateVarParams(req))
+	err := s.envVars.Update(ctx, protoToUpdateVarParams(req))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update var: %v", err)
 	}
@@ -206,7 +224,7 @@ func (s *varsServer) DeleteEnvVar(
 	if !req.HasId() {
 		return nil, status.Error(codes.InvalidArgument, "var ID is required")
 	}
-	if err := s.vars.DeleteEnvVar(ctx, req.GetId()); err != nil {
+	if err := s.envVars.Delete(ctx, req.GetId()); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete var: %v", err)
 	}
 	return &emptypb.Empty{}, nil
