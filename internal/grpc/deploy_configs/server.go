@@ -17,8 +17,8 @@ type deployConfigsServer struct {
 }
 
 type DeployConfigsService interface {
-	Generate(ctx context.Context, id string) (*models.GeneratedDeployConfig, error)
-	Get(ctx context.Context, id string) (*models.DeployConfig, error)
+	Generate(ctx context.Context, projectId string) (*models.GeneratedDeployConfig, error)
+	Get(ctx context.Context, projectId string) (*models.DeployConfig, error)
 	Update(ctx context.Context, args *models.UpdateDeployConfigParams) error
 }
 

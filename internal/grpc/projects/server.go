@@ -49,6 +49,9 @@ func (s *projectsServer) ListProjects(
 	ctx context.Context,
 	req *projectsv1.ListProjectsRequest,
 ) (*projectsv1.ListProjectsResponse, error) {
+	if !req.HasOwnerId() {
+		return nil, status.Error(codes.InvalidArgument, "owner ID is required")
+	}
 	projects, err := s.projects.List(ctx, protoToListProjectsParams(req))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list projects: %v", err)

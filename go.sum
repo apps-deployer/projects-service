@@ -1,7 +1,5 @@
 github.com/BurntSushi/toml v1.2.1 h1:9F2/+DoOYIOksmaJFPw1tGFy1eDnIJXg+UHjuD8lTak=
 github.com/BurntSushi/toml v1.2.1/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
-github.com/apps-deployer/protos v0.0.9 h1:9uMUU3bv647qvz++Wd4/I7IFFVvzvPwGqFKQH6u6zz8=
-github.com/apps-deployer/protos v0.0.9/go.mod h1:J3XImKT59RwfVIztsnfFaMjuxtHICvaoin6vw27bKA8=
 github.com/apps-deployer/protos v0.0.10 h1:AZ/kdZVeflaRVsGJt/Uhqx6i9jw35ReWmrMJQcgk7Pc=
 github.com/apps-deployer/protos v0.0.10/go.mod h1:J3XImKT59RwfVIztsnfFaMjuxtHICvaoin6vw27bKA8=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=

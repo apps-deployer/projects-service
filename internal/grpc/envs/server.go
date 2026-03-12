@@ -17,9 +17,9 @@ type envsServer struct {
 }
 
 type EnvsService interface {
-	GetEnvByGit(ctx context.Context, args *models.GetEnvByGitParams) (*models.Env, error)
+	GetByGit(ctx context.Context, args *models.GetEnvByGitParams) (*models.Env, error)
 	Get(ctx context.Context, id string) (*models.Env, error)
-	List(ctx context.Context, args *models.ListEnvParams) ([]*models.Env, error)
+	List(ctx context.Context, args *models.ListEnvsParams) ([]*models.Env, error)
 	Create(ctx context.Context, args *models.CreateEnvParams) (*models.Env, error)
 	Update(ctx context.Context, args *models.UpdateEnvParams) error
 	Delete(ctx context.Context, id string) error
@@ -39,7 +39,7 @@ func (s *envsServer) GetEnvByGit(
 	if !req.HasTargetBranch() {
 		return nil, status.Error(codes.InvalidArgument, "target branch is required")
 	}
-	env, err := s.envs.GetEnvByGit(ctx, protoToGetEnvByGitParams(req))
+	env, err := s.envs.GetByGit(ctx, protoToGetEnvByGitParams(req))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get env: %v", err)
 	}

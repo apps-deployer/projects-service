@@ -36,3 +36,9 @@ type UpdateFrameworkParams struct {
 	BuildCmd   *string
 	RunCmd     *string
 }
+
+type SaveFrameworkParams = CreateFrameworkParams
+
+type SaveFrameworkResponse struct {
+	Id string
+}

@@ -1,26 +1,26 @@
 package models
 
 type DeployConfig struct {
-	Id                  string
-	ProjectId           string
-	FrameworkId         string
-	RootDirOverwrite    string
-	OutputDirOverwrite  string
-	BaseImageOverwrite  string
-	InstallCmdOverwrite string
-	BuildCmdOverwrite   string
-	RunCmdOverwrite     string
+	Id                 string
+	ProjectId          string
+	FrameworkId        string
+	RootDirOverride    string
+	OutputDirOverride  string
+	BaseImageOverride  string
+	InstallCmdOverride string
+	BuildCmdOverride   string
+	RunCmdOverride     string
 }
 
 type UpdateDeployConfigParams struct {
-	Id                  string
-	FrameworkId         *string
-	RootDirOverwrite    *string
-	OutputDirOverwrite  *string
-	BaseImageOverwrite  *string
-	InstallCmdOverwrite *string
-	BuildCmdOverwrite   *string
-	RunCmdOverwrite     *string
+	Id                 string
+	FrameworkId        *string
+	RootDirOverride    *string
+	OutputDirOverride  *string
+	BaseImageOverride  *string
+	InstallCmdOverride *string
+	BuildCmdOverride   *string
+	RunCmdOverride     *string
 }
 
 type GeneratedDeployConfig struct {
@@ -32,4 +32,9 @@ type GeneratedDeployConfig struct {
 	InstallCmd string
 	BuildCmd   string
 	RunCmd     string
+}
+
+type SaveDeployConfigParams struct {
+	ProjectId   string
+	FrameworkId string
 }

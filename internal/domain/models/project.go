@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/golang/protobuf/ptypes/timestamp"
+	"time"
 )
 
 type Project struct {
@@ -9,7 +9,7 @@ type Project struct {
 	Name      string
 	RepoUrl   string
 	OwnerId   string
-	CreatedAt timestamp.Timestamp
+	CreatedAt time.Time
 }
 
 type ListProjectsParams struct {
@@ -19,10 +19,10 @@ type ListProjectsParams struct {
 }
 
 type CreateProjectParams struct {
-	Name                   string
-	RepoUrl                string
-	OwnerId                string
-	DeployConfigTemplateId string
+	Name        string
+	RepoUrl     string
+	OwnerId     string
+	FrameworkId string
 }
 
 type UpdateProjectParams struct {
@@ -30,4 +30,15 @@ type UpdateProjectParams struct {
 	Name    *string
 	RepoUrl *string
 	OwnerId *string
+}
+
+type SaveProjectParams struct {
+	Name    string
+	RepoUrl string
+	OwnerId string
+}
+
+type SaveProjectResponse struct {
+	Id        string
+	CreatedAt time.Time
 }

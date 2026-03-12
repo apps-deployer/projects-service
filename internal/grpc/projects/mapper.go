@@ -3,6 +3,7 @@ package projects
 import (
 	"github.com/apps-deployer/projects-service/internal/domain/models"
 	projectsv1 "github.com/apps-deployer/protos/gen/go/projects/v1"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func projectToProto(p *models.Project) *projectsv1.ProjectResponse {
@@ -11,7 +12,7 @@ func projectToProto(p *models.Project) *projectsv1.ProjectResponse {
 		Name:      &p.Name,
 		RepoUrl:   &p.RepoUrl,
 		OwnerId:   &p.OwnerId,
-		CreatedAt: &p.CreatedAt,
+		CreatedAt: timestamppb.New(p.CreatedAt),
 	}.Build()
 }
 
@@ -35,10 +36,10 @@ func protoToListProjectsParams(req *projectsv1.ListProjectsRequest) *models.List
 
 func protoToCreateProjectsParams(req *projectsv1.CreateProjectRequest) *models.CreateProjectParams {
 	return &models.CreateProjectParams{
-		Name:                   req.GetName(),
-		RepoUrl:                req.GetRepoUrl(),
-		OwnerId:                req.GetOwnerId(),
-		DeployConfigTemplateId: req.GetDeployConfigTemplateId(),
+		Name:        req.GetName(),
+		RepoUrl:     req.GetRepoUrl(),
+		OwnerId:     req.GetOwnerId(),
+		FrameworkId: req.GetDeployConfigTemplateId(),
 	}
 }
 

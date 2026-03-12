@@ -4,7 +4,6 @@ go 1.26.1
 
 require (
 	github.com/apps-deployer/protos v0.0.10
-	github.com/golang/protobuf v1.5.4
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	google.golang.org/grpc v1.79.2
 	google.golang.org/protobuf v1.36.11

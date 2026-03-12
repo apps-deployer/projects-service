@@ -34,3 +34,7 @@ type UpdateVarParams struct {
 	Id    string
 	Value *string
 }
+
+type SaveVarResponse struct {
+	Id string
+}

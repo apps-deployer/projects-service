@@ -27,8 +27,14 @@ type UpdateEnvParams struct {
 	DomainName   *string
 }
 
-type ListEnvParams struct {
+type ListEnvsParams struct {
 	ProjectId string
 	Limit     int64
 	Offset    int64
+}
+
+type SaveEnvParams = CreateEnvParams
+
+type SaveEnvResponse struct {
+	Id string
 }

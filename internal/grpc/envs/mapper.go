@@ -32,8 +32,8 @@ func protoToGetEnvByGitParams(req *projectsv1.GetEnvByGitRequest) *models.GetEnv
 	}
 }
 
-func protoToListEnvParams(req *projectsv1.ListEnvsRequest) *models.ListEnvParams {
-	return &models.ListEnvParams{
+func protoToListEnvParams(req *projectsv1.ListEnvsRequest) *models.ListEnvsParams {
+	return &models.ListEnvsParams{
 		ProjectId: req.GetProjectId(),
 		Limit:     req.GetLimit(),
 		Offset:    req.GetOffset(),

@@ -10,12 +10,12 @@ func deployConfigToProto(c *models.DeployConfig) *projectsv1.DeployConfigRespons
 		Id:                  &c.Id,
 		ProjectId:           &c.ProjectId,
 		FrameworkId:         &c.FrameworkId,
-		RootDirOverwrite:    &c.RootDirOverwrite,
-		OutputDirOverwrite:  &c.OutputDirOverwrite,
-		BaseImageOverwrite:  &c.BaseImageOverwrite,
-		InstallCmdOverwrite: &c.InstallCmdOverwrite,
-		BuildCmdOverwrite:   &c.BuildCmdOverwrite,
-		RunCmdOverwrite:     &c.RunCmdOverwrite,
+		RootDirOverwrite:    &c.RootDirOverride,
+		OutputDirOverwrite:  &c.OutputDirOverride,
+		BaseImageOverwrite:  &c.BaseImageOverride,
+		InstallCmdOverwrite: &c.InstallCmdOverride,
+		BuildCmdOverwrite:   &c.BuildCmdOverride,
+		RunCmdOverwrite:     &c.RunCmdOverride,
 	}.Build()
 }
 
@@ -40,27 +40,27 @@ func protoToUpdateDeployConfigParams(req *projectsv1.UpdateDeployConfigRequest) 
 	}
 	if req.HasRootDirOverwrite() {
 		rootDir := req.GetRootDirOverwrite()
-		config.RootDirOverwrite = &rootDir
+		config.RootDirOverride = &rootDir
 	}
 	if req.HasOutputDirOverwrite() {
 		outputDir := req.GetOutputDirOverwrite()
-		config.OutputDirOverwrite = &outputDir
+		config.OutputDirOverride = &outputDir
 	}
 	if req.HasBaseImageOverwrite() {
 		baseImage := req.GetBaseImageOverwrite()
-		config.BaseImageOverwrite = &baseImage
+		config.BaseImageOverride = &baseImage
 	}
 	if req.HasInstallCmdOverwrite() {
 		installCmd := req.GetInstallCmdOverwrite()
-		config.InstallCmdOverwrite = &installCmd
+		config.InstallCmdOverride = &installCmd
 	}
 	if req.HasBuildCmdOverwrite() {
 		buildCmd := req.GetBuildCmdOverwrite()
-		config.BuildCmdOverwrite = &buildCmd
+		config.BuildCmdOverride = &buildCmd
 	}
 	if req.HasRunCmdOverwrite() {
 		runCmd := req.GetRunCmdOverwrite()
-		config.RunCmdOverwrite = &runCmd
+		config.RunCmdOverride = &runCmd
 	}
 	return config
 }
