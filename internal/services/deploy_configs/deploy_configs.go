@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/apps-deployer/projects-service/internal/domain/models"
+	"github.com/apps-deployer/projects-service/internal/lib/logger/sl"
 )
 
 type DeployConfigStorage interface {
@@ -27,13 +28,23 @@ func New(log *slog.Logger, deployConfigs DeployConfigStorage, frameworks Framewo
 }
 
 func (c *DeployConfigs) Generate(ctx context.Context, projectId string) (*models.GeneratedDeployConfig, error) {
-	// TODO: Auth, Refactor
+	// TODO: Auth
+
+	op := "DeployConfigs.Generate"
+	log := c.log.With(
+		slog.String("op", op),
+		slog.String("projectId", projectId),
+	)
+	log.Info("generating deploy config")
+
 	config, err := c.deployConfigs.DeployConfig(ctx, projectId)
 	if err != nil {
+		log.Error("failed to get deploy config", sl.Err(err))
 		return nil, err
 	}
 	framework, err := c.frameworks.Framework(ctx, config.FrameworkId)
 	if err != nil {
+		log.Error("failed to get framework", sl.Err(err))
 		return nil, err
 	}
 	res := &models.GeneratedDeployConfig{
@@ -58,11 +69,33 @@ func pick(override, base string) string {
 
 func (c *DeployConfigs) Get(ctx context.Context, projectId string) (*models.DeployConfig, error) {
 	// TODO: Auth
+	op := "DeployConfigs.Get"
+	log := c.log.With(
+		slog.String("op", op),
+		slog.String("projectId", projectId),
+	)
+	log.Info("getting deploy config")
+
 	config, err := c.deployConfigs.DeployConfig(ctx, projectId)
-	return config, err
+	if err != nil {
+		log.Error("failed to get deploy config", sl.Err(err))
+		return nil, err
+	}
+	return config, nil
 }
 
 func (c *DeployConfigs) Update(ctx context.Context, args *models.UpdateDeployConfigParams) error {
+	op := "DeployConfigs.Update"
+	log := c.log.With(
+		slog.String("op", op),
+		slog.String("id", args.Id),
+	)
+	log.Info("updating deploy config")
+
 	err := c.deployConfigs.UpdateDeployConfig(ctx, args)
-	return err
+	if err != nil {
+		log.Error("failed to update deploy config", sl.Err(err))
+		return err
+	}
+	return nil
 }

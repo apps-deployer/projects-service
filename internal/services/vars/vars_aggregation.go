@@ -2,12 +2,25 @@ package vars
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/apps-deployer/projects-service/internal/domain/models"
+	"github.com/apps-deployer/projects-service/internal/lib/logger/sl"
 )
 
 func (v *Vars) ListAllVars(ctx context.Context, envId string) ([]*models.Var, error) {
 	// TODO: Auth
+	op := "Vars.ListAllVars"
+	log := v.log.With(
+		slog.String("op", op),
+		slog.String("id", envId),
+	)
+	log.Info("listing all vars")
+
 	res, err := v.mergedVars.MergedVars(ctx, envId)
-	return res, err
+	if err != nil {
+		log.Error("failed to list all vars", sl.Err(err))
+		return nil, err
+	}
+	return res, nil
 }

@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/apps-deployer/projects-service/internal/domain/models"
+	"github.com/apps-deployer/projects-service/internal/lib/logger/sl"
 )
 
 type EnvStorage interface {
@@ -27,24 +28,62 @@ func New(log *slog.Logger, envs EnvStorage) *Envs {
 
 func (e *Envs) GetByGit(ctx context.Context, args *models.GetEnvByGitParams) (*models.Env, error) {
 	// TODO: Auth
+	op := "Envs.GetByGit"
+	log := e.log.With(
+		slog.String("op", op),
+		slog.String("repoUrl", args.RepoUrl),
+		slog.String("targetBranch", args.TargetBranch),
+	)
+	log.Info("getting env by git")
 	env, err := e.envs.EnvByGit(ctx, args.RepoUrl, args.TargetBranch)
-	return env, err
+	if err != nil {
+		log.Error("failed to get env by git", sl.Err(err))
+		return nil, err
+	}
+	return env, nil
 }
 
 func (e *Envs) Get(ctx context.Context, id string) (*models.Env, error) {
 	// TODO: Auth
+	op := "Envs.Get"
+	log := e.log.With(
+		slog.String("op", op),
+		slog.String("id", id),
+	)
+	log.Info("getting env")
 	env, err := e.envs.Env(ctx, id)
-	return env, err
+	if err != nil {
+		log.Error("failed to get env", sl.Err(err))
+		return nil, err
+	}
+	return env, nil
 }
 
 func (e *Envs) List(ctx context.Context, args *models.ListEnvsParams) ([]*models.Env, error) {
 	// TODO: Auth
+	op := "Envs.List"
+	log := e.log.With(
+		slog.String("op", op),
+		slog.String("projectId", args.ProjectId),
+	)
+	log.Info("listing envs")
 	envs, err := e.envs.ListEnvs(ctx, args)
-	return envs, err
+	if err != nil {
+		log.Error("failed to list envs", sl.Err(err))
+		return nil, err
+	}
+	return envs, nil
 }
 
 func (e *Envs) Create(ctx context.Context, args *models.CreateEnvParams) (*models.Env, error) {
 	// TODO: Auth
+	op := "Envs.Create"
+	log := e.log.With(
+		slog.String("op", op),
+		slog.String("projectId", args.ProjectId),
+		slog.String("targetBranch", args.TargetBranch),
+	)
+	log.Info("creating env")
 	res, err := e.envs.SaveEnv(ctx, &models.SaveEnvParams{
 		Name:         args.Name,
 		ProjectId:    args.ProjectId,
@@ -52,6 +91,7 @@ func (e *Envs) Create(ctx context.Context, args *models.CreateEnvParams) (*model
 		DomainName:   args.DomainName,
 	})
 	if err != nil {
+		log.Error("failed to create env", sl.Err(err))
 		return nil, err
 	}
 	return &models.Env{
@@ -65,12 +105,32 @@ func (e *Envs) Create(ctx context.Context, args *models.CreateEnvParams) (*model
 
 func (e *Envs) Update(ctx context.Context, args *models.UpdateEnvParams) error {
 	// TODO: Auth
+	op := "Envs.Update"
+	log := e.log.With(
+		slog.String("op", op),
+		slog.String("id", args.Id),
+	)
+	log.Info("updating env")
 	err := e.envs.UpdateEnv(ctx, args)
-	return err
+	if err != nil {
+		log.Error("failed to update env", sl.Err(err))
+		return err
+	}
+	return nil
 }
 
 func (e *Envs) Delete(ctx context.Context, id string) error {
 	// TODO: Auth
+	op := "Envs.Delete"
+	log := e.log.With(
+		slog.String("op", op),
+		slog.String("id", id),
+	)
+	log.Info("deleting env")
 	err := e.envs.DeleteEnv(ctx, id)
-	return err
+	if err != nil {
+		log.Error("failed to delete env", sl.Err(err))
+		return err
+	}
+	return nil
 }
