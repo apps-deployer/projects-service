@@ -1,3 +1,9 @@
+CREATE SCHEMA IF NOT EXISTS crypto;
+CREATE SCHEMA IF NOT EXISTS projects;
+CREATE SCHEMA IF NOT EXISTS utils;
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto SCHEMA crypto;
+
 CREATE TABLE IF NOT EXISTS projects.projects (
     id UUID PRIMARY KEY DEFAULT uuidv7(),
     name VARCHAR(128) NOT NULL CHECK char_length(name) > 0,
@@ -71,3 +77,45 @@ CREATE TABLE IF NOT EXISTS projects.env_vars (
 CREATE INDEX IF NOT EXISTS idx_envs_project_id ON projects.envs (project_id);
 CREATE INDEX IF NOT EXISTS idx_project_vars_project_id ON projects.project_vars (project_id);
 CREATE INDEX IF NOT EXISTS idx_env_vars_env_id ON projects.env_vars (env_id);
+
+CREATE OR REPLACE FUNCTION utils.update_updated_at()
+RETURN TRIGGER AS $$
+BEGIN 
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_update_projects
+BEFORE UPDATE ON projects.projects
+FOR EACH ROW
+EXECUTE FUNCTION utils.update_updated_at();
+
+CREATE TRIGGER trg_update_frameworks
+BEFORE UPDATE ON projects.frameworks
+FOR EACH ROW
+EXECUTE FUNCTION utils.update_updated_at();
+
+CREATE TRIGGER trg_update_deploy_configs
+BEFORE UPDATE ON projects.deploy_configs
+FOR EACH ROW
+EXECUTE FUNCTION utils.update_updated_at();
+
+CREATE TRIGGER trg_update_envs
+BEFORE UPDATE ON projects.envs
+FOR EACH ROW
+EXECUTE FUNCTION utils.update_updated_at();
+
+CREATE TRIGGER trg_update_project_vars
+BEFORE UPDATE ON projects.project_vars
+FOR EACH ROW
+EXECUTE FUNCTION utils.update_updated_at();
+
+CREATE TRIGGER trg_update_env_vars
+BEFORE UPDATE ON projects.env_vars
+FOR EACH ROW
+EXECUTE FUNCTION utils.update_updated_at();
+
+INSERT INTO projects.frameworks (name, base_image)
+VALUES ('Custom', 'scratch')
+ON CONFLICT (name) DO NOTHING;
