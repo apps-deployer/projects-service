@@ -122,7 +122,7 @@ func (s *envsServer) UpdateEnv(
 
 func (s *envsServer) DeleteEnv(
 	ctx context.Context,
-	req *projectsv1.GetEnvRequest,
+	req *projectsv1.DeleteEnvRequest,
 ) (*emptypb.Empty, error) {
 	if !req.HasId() {
 		return nil, status.Error(codes.InvalidArgument, "env ID is required")

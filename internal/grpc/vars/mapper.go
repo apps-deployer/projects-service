@@ -3,13 +3,15 @@ package vars
 import (
 	"github.com/apps-deployer/projects-service/internal/domain/models"
 	projectsv1 "github.com/apps-deployer/protos/gen/go/projects/v1"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func varToProto(v *models.Var) *projectsv1.VarResponse {
 	return projectsv1.VarResponse_builder{
-		Id:    &v.Id,
-		Key:   &v.Key,
-		Value: &v.Value,
+		Id:        &v.Id,
+		Key:       &v.Key,
+		CreatedAt: timestamppb.New(v.CreatedAt),
+		UpdatedAt: timestamppb.New(v.UpdatedAt),
 	}.Build()
 }
 
@@ -19,6 +21,24 @@ func varsToProto(vars []*models.Var) *projectsv1.ListVarsResponse {
 		varsResp[i] = varToProto(v)
 	}
 	return projectsv1.ListVarsResponse_builder{
+		Vars: varsResp,
+	}.Build()
+}
+
+func resolvedVarToProto(v *models.ResolvedVar) *projectsv1.ResolvedVar {
+	return projectsv1.ResolvedVar_builder{
+		Id:    &v.Id,
+		Key:   &v.Key,
+		Value: &v.Value,
+	}.Build()
+}
+
+func resolvedVarsToProto(vars []*models.ResolvedVar) *projectsv1.ResolveVarsResponse {
+	varsResp := make([]*projectsv1.ResolvedVar, len(vars))
+	for i, v := range vars {
+		varsResp[i] = resolvedVarToProto(v)
+	}
+	return projectsv1.ResolveVarsResponse_builder{
 		Vars: varsResp,
 	}.Build()
 }

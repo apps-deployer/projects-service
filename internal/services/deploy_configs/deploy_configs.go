@@ -27,7 +27,7 @@ func New(log *slog.Logger, deployConfigs DeployConfigStorage, frameworks Framewo
 	return &DeployConfigs{log: log, deployConfigs: deployConfigs, frameworks: frameworks}
 }
 
-func (c *DeployConfigs) Generate(ctx context.Context, projectId string) (*models.GeneratedDeployConfig, error) {
+func (c *DeployConfigs) Generate(ctx context.Context, projectId string) (*models.ResolvedDeployConfig, error) {
 	// TODO: Auth
 
 	op := "DeployConfigs.Generate"
@@ -47,7 +47,7 @@ func (c *DeployConfigs) Generate(ctx context.Context, projectId string) (*models
 		log.Error("failed to get framework", sl.Err(err))
 		return nil, err
 	}
-	res := &models.GeneratedDeployConfig{
+	res := &models.ResolvedDeployConfig{
 		Id:         config.Id,
 		ProjectId:  config.ProjectId,
 		RootDir:    pick(config.RootDirOverride, framework.RootDir),

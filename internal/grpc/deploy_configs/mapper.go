@@ -3,24 +3,27 @@ package deployconfigs
 import (
 	"github.com/apps-deployer/projects-service/internal/domain/models"
 	projectsv1 "github.com/apps-deployer/protos/gen/go/projects/v1"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func deployConfigToProto(c *models.DeployConfig) *projectsv1.DeployConfigResponse {
 	return projectsv1.DeployConfigResponse_builder{
-		Id:                  &c.Id,
-		ProjectId:           &c.ProjectId,
-		FrameworkId:         &c.FrameworkId,
-		RootDirOverwrite:    &c.RootDirOverride,
-		OutputDirOverwrite:  &c.OutputDirOverride,
-		BaseImageOverwrite:  &c.BaseImageOverride,
-		InstallCmdOverwrite: &c.InstallCmdOverride,
-		BuildCmdOverwrite:   &c.BuildCmdOverride,
-		RunCmdOverwrite:     &c.RunCmdOverride,
+		Id:                 &c.Id,
+		ProjectId:          &c.ProjectId,
+		FrameworkId:        &c.FrameworkId,
+		RootDirOverride:    &c.RootDirOverride,
+		OutputDirOverride:  &c.OutputDirOverride,
+		BaseImageOverride:  &c.BaseImageOverride,
+		InstallCmdOverride: &c.InstallCmdOverride,
+		BuildCmdOverride:   &c.BuildCmdOverride,
+		RunCmdOverride:     &c.RunCmdOverride,
+		CreatedAt:          timestamppb.New(c.CreatedAt),
+		UpdatedAt:          timestamppb.New(c.UpdatedAt),
 	}.Build()
 }
 
-func generatedDeployConfigToProto(c *models.GeneratedDeployConfig) *projectsv1.GenerateDeployConfigResponse {
-	return projectsv1.GenerateDeployConfigResponse_builder{
+func resolvedDeployConfigToProto(c *models.ResolvedDeployConfig) *projectsv1.ResolveDeployConfigResponse {
+	return projectsv1.ResolveDeployConfigResponse_builder{
 		Id:         &c.Id,
 		ProjectId:  &c.ProjectId,
 		RootDir:    &c.RootDir,
@@ -38,28 +41,28 @@ func protoToUpdateDeployConfigParams(req *projectsv1.UpdateDeployConfigRequest) 
 		frameworkId := req.GetFrameworkId()
 		config.FrameworkId = &frameworkId
 	}
-	if req.HasRootDirOverwrite() {
-		rootDir := req.GetRootDirOverwrite()
+	if req.HasRootDirOverride() {
+		rootDir := req.GetRootDirOverride()
 		config.RootDirOverride = &rootDir
 	}
-	if req.HasOutputDirOverwrite() {
-		outputDir := req.GetOutputDirOverwrite()
+	if req.HasOutputDirOverride() {
+		outputDir := req.GetOutputDirOverride()
 		config.OutputDirOverride = &outputDir
 	}
-	if req.HasBaseImageOverwrite() {
-		baseImage := req.GetBaseImageOverwrite()
+	if req.HasBaseImageOverride() {
+		baseImage := req.GetBaseImageOverride()
 		config.BaseImageOverride = &baseImage
 	}
-	if req.HasInstallCmdOverwrite() {
-		installCmd := req.GetInstallCmdOverwrite()
+	if req.HasInstallCmdOverride() {
+		installCmd := req.GetInstallCmdOverride()
 		config.InstallCmdOverride = &installCmd
 	}
-	if req.HasBuildCmdOverwrite() {
-		buildCmd := req.GetBuildCmdOverwrite()
+	if req.HasBuildCmdOverride() {
+		buildCmd := req.GetBuildCmdOverride()
 		config.BuildCmdOverride = &buildCmd
 	}
-	if req.HasRunCmdOverwrite() {
-		runCmd := req.GetRunCmdOverwrite()
+	if req.HasRunCmdOverride() {
+		runCmd := req.GetRunCmdOverride()
 		config.RunCmdOverride = &runCmd
 	}
 	return config

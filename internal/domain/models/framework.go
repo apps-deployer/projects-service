@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type Framework struct {
 	Id         string
 	Name       string
@@ -9,6 +11,8 @@ type Framework struct {
 	InstallCmd string
 	BuildCmd   string
 	RunCmd     string
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
 }
 
 type ListFrameworksParams struct {
@@ -37,8 +41,8 @@ type UpdateFrameworkParams struct {
 	RunCmd     *string
 }
 
-type SaveFrameworkParams = CreateFrameworkParams
-
 type SaveFrameworkResponse struct {
-	Id string
+	Id        string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }

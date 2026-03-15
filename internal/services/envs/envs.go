@@ -12,7 +12,7 @@ type EnvStorage interface {
 	Env(ctx context.Context, id string) (*models.Env, error)
 	EnvByGit(ctx context.Context, repoUrl string, branch string) (*models.Env, error)
 	ListEnvs(ctx context.Context, args *models.ListEnvsParams) ([]*models.Env, error)
-	SaveEnv(ctx context.Context, args *models.SaveEnvParams) (*models.SaveEnvResponse, error)
+	SaveEnv(ctx context.Context, args *models.CreateEnvParams) (*models.SaveEnvResponse, error)
 	UpdateEnv(ctx context.Context, args *models.UpdateEnvParams) error
 	DeleteEnv(ctx context.Context, id string) error
 }
@@ -84,7 +84,7 @@ func (e *Envs) Create(ctx context.Context, args *models.CreateEnvParams) (*model
 		slog.String("targetBranch", args.TargetBranch),
 	)
 	log.Info("creating env")
-	res, err := e.envs.SaveEnv(ctx, &models.SaveEnvParams{
+	res, err := e.envs.SaveEnv(ctx, &models.CreateEnvParams{
 		Name:         args.Name,
 		ProjectId:    args.ProjectId,
 		TargetBranch: args.TargetBranch,
@@ -100,6 +100,8 @@ func (e *Envs) Create(ctx context.Context, args *models.CreateEnvParams) (*model
 		ProjectId:    args.ProjectId,
 		TargetBranch: args.TargetBranch,
 		DomainName:   args.DomainName,
+		CreatedAt:    res.CreatedAt,
+		UpdatedAt:    res.UpdatedAt,
 	}, nil
 }
 

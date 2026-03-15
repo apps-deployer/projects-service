@@ -99,7 +99,7 @@ func (s *frameworksServer) UpdateFramework(
 
 func (s *frameworksServer) DeleteFramework(
 	ctx context.Context,
-	req *projectsv1.GetFrameworkRequest,
+	req *projectsv1.DeleteFrameworkRequest,
 ) (*emptypb.Empty, error) {
 	if !req.HasId() {
 		return nil, status.Error(codes.InvalidArgument, "framework ID is required")

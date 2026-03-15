@@ -3,6 +3,7 @@ package envs
 import (
 	"github.com/apps-deployer/projects-service/internal/domain/models"
 	projectsv1 "github.com/apps-deployer/protos/gen/go/projects/v1"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func envToProto(e *models.Env) *projectsv1.EnvResponse {
@@ -12,6 +13,8 @@ func envToProto(e *models.Env) *projectsv1.EnvResponse {
 		ProjectId:    &e.ProjectId,
 		TargetBranch: &e.TargetBranch,
 		DomainName:   &e.DomainName,
+		CreatedAt:    timestamppb.New(e.CreatedAt),
+		UpdatedAt:    timestamppb.New(e.UpdatedAt),
 	}.Build()
 }
 

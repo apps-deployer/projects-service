@@ -97,7 +97,7 @@ func (s *projectsServer) UpdateProject(
 
 func (s *projectsServer) DeleteProject(
 	ctx context.Context,
-	req *projectsv1.GetProjectRequest,
+	req *projectsv1.DeleteProjectRequest,
 ) (*emptypb.Empty, error) {
 	if !req.HasId() {
 		return nil, status.Error(codes.InvalidArgument, "project ID is required")

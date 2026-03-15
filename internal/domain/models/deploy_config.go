@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type DeployConfig struct {
 	Id                 string
 	ProjectId          string
@@ -10,6 +12,8 @@ type DeployConfig struct {
 	InstallCmdOverride string
 	BuildCmdOverride   string
 	RunCmdOverride     string
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
 }
 
 type UpdateDeployConfigParams struct {
@@ -23,7 +27,7 @@ type UpdateDeployConfigParams struct {
 	RunCmdOverride     *string
 }
 
-type GeneratedDeployConfig struct {
+type ResolvedDeployConfig struct {
 	Id         string
 	ProjectId  string
 	RootDir    string

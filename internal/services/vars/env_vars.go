@@ -8,22 +8,6 @@ import (
 	"github.com/apps-deployer/projects-service/internal/lib/logger/sl"
 )
 
-func (v *Vars) GetEnvVar(ctx context.Context, id string) (*models.Var, error) {
-	// TODO: Auth
-	op := "Vars.GetEnvVar"
-	log := v.log.With(
-		slog.String("op", op),
-		slog.String("id", id),
-	)
-	log.Info("getting env var")
-	res, err := v.envVars.EnvVar(ctx, id)
-	if err != nil {
-		log.Error("failed to get env var", sl.Err(err))
-		return nil, err
-	}
-	return res, nil
-}
-
 func (v *Vars) ListEnvVars(ctx context.Context, args *models.ListEnvVarsParams) ([]*models.Var, error) {
 	// TODO: Auth
 	op := "Vars.ListEnvVars"
@@ -55,9 +39,10 @@ func (v *Vars) CreateEnvVar(ctx context.Context, args *models.CreateEnvVarParams
 		return nil, err
 	}
 	return &models.Var{
-		Id:    res.Id,
-		Key:   args.Key,
-		Value: args.Value,
+		Id:        res.Id,
+		Key:       args.Key,
+		CreatedAt: res.CreatedAt,
+		UpdatedAt: res.UpdatedAt,
 	}, nil
 }
 

@@ -8,7 +8,7 @@ import (
 	"github.com/apps-deployer/projects-service/internal/lib/logger/sl"
 )
 
-func (v *Vars) ListAllVars(ctx context.Context, envId string) ([]*models.Var, error) {
+func (v *Vars) ResolveVars(ctx context.Context, envId string) ([]*models.Var, error) {
 	// TODO: Auth
 	op := "Vars.ListAllVars"
 	log := v.log.With(
@@ -17,7 +17,7 @@ func (v *Vars) ListAllVars(ctx context.Context, envId string) ([]*models.Var, er
 	)
 	log.Info("listing all vars")
 
-	res, err := v.mergedVars.MergedVars(ctx, envId)
+	res, err := v.resolvedVars.ResolvedVars(ctx, envId)
 	if err != nil {
 		log.Error("failed to list all vars", sl.Err(err))
 		return nil, err

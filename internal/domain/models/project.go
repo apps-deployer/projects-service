@@ -10,6 +10,7 @@ type Project struct {
 	RepoUrl   string
 	OwnerId   string
 	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type ListProjectsParams struct {
@@ -41,4 +42,5 @@ type SaveProjectParams struct {
 type SaveProjectResponse struct {
 	Id        string
 	CreatedAt time.Time
+	UpdatedAt time.Time
 }

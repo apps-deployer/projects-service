@@ -3,6 +3,7 @@ package frameworks
 import (
 	"github.com/apps-deployer/projects-service/internal/domain/models"
 	projectsv1 "github.com/apps-deployer/protos/gen/go/projects/v1"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func frameworkToProto(f *models.Framework) *projectsv1.FrameworkResponse {
@@ -15,6 +16,8 @@ func frameworkToProto(f *models.Framework) *projectsv1.FrameworkResponse {
 		InstallCmd: &f.InstallCmd,
 		BuildCmd:   &f.BuildCmd,
 		RunCmd:     &f.RunCmd,
+		CreatedAt:  timestamppb.New(f.CreatedAt),
+		UpdatedAt:  timestamppb.New(f.UpdatedAt),
 	}.Build()
 }
 

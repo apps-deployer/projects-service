@@ -13,6 +13,7 @@ func projectToProto(p *models.Project) *projectsv1.ProjectResponse {
 		RepoUrl:   &p.RepoUrl,
 		OwnerId:   &p.OwnerId,
 		CreatedAt: timestamppb.New(p.CreatedAt),
+		UpdatedAt: timestamppb.New(p.UpdatedAt),
 	}.Build()
 }
 

@@ -8,22 +8,6 @@ import (
 	"github.com/apps-deployer/projects-service/internal/lib/logger/sl"
 )
 
-func (v *Vars) GetProjectVar(ctx context.Context, id string) (*models.Var, error) {
-	// TODO: Auth
-	op := "Vars.GetProjectVar"
-	log := v.log.With(
-		slog.String("op", op),
-		slog.String("id", id),
-	)
-	log.Info("getting project var")
-	res, err := v.projectVars.ProjectVar(ctx, id)
-	if err != nil {
-		log.Error("failed to get project var", sl.Err(err))
-		return nil, err
-	}
-	return res, nil
-}
-
 func (v *Vars) ListProjectVars(ctx context.Context, args *models.ListProjectVarsParams) ([]*models.Var, error) {
 	// TODO: Auth
 	op := "Vars.ListProjectVars"
@@ -55,9 +39,10 @@ func (v *Vars) CreateProjectVar(ctx context.Context, args *models.CreateProjectV
 		return nil, err
 	}
 	return &models.Var{
-		Id:    res.Id,
-		Key:   args.Key,
-		Value: args.Value,
+		Id:        res.Id,
+		Key:       args.Key,
+		CreatedAt: res.CreatedAt,
+		UpdatedAt: res.UpdatedAt,
 	}, nil
 }
 

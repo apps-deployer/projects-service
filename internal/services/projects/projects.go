@@ -102,6 +102,7 @@ func (p *Projects) Create(ctx context.Context, args *models.CreateProjectParams)
 		RepoUrl:   args.RepoUrl,
 		OwnerId:   args.OwnerId,
 		CreatedAt: res.CreatedAt,
+		UpdatedAt: res.UpdatedAt,
 	}, nil
 }
 

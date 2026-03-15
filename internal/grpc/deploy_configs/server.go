@@ -17,7 +17,7 @@ type deployConfigsServer struct {
 }
 
 type DeployConfigsService interface {
-	Generate(ctx context.Context, projectId string) (*models.GeneratedDeployConfig, error)
+	Resolve(ctx context.Context, projectId string) (*models.ResolvedDeployConfig, error)
 	Get(ctx context.Context, projectId string) (*models.DeployConfig, error)
 	Update(ctx context.Context, args *models.UpdateDeployConfigParams) error
 }
@@ -29,21 +29,21 @@ func Register(grpcServer *grpc.Server, deployConfigs DeployConfigsService) {
 	)
 }
 
-func (s *deployConfigsServer) GenerateDeployConfig(
+func (s *deployConfigsServer) ResolveDeployConfig(
 	ctx context.Context,
 	req *projectsv1.GetDeployConfigRequest,
-) (*projectsv1.GenerateDeployConfigResponse, error) {
+) (*projectsv1.ResolveDeployConfigResponse, error) {
 	if !req.HasProjectId() {
 		return nil, status.Error(codes.InvalidArgument, "project ID is required")
 	}
-	config, err := s.deployConfigs.Generate(ctx, req.GetProjectId())
+	config, err := s.deployConfigs.Resolve(ctx, req.GetProjectId())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to generate deploy config: %v", err)
 	}
 	if config == nil {
 		return nil, status.Error(codes.NotFound, "project not found")
 	}
-	return generatedDeployConfigToProto(config), nil
+	return resolvedDeployConfigToProto(config), nil
 }
 
 func (s *deployConfigsServer) GetDeployConfig(

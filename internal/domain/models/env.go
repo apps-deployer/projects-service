@@ -1,11 +1,15 @@
 package models
 
+import "time"
+
 type Env struct {
 	Id           string
 	Name         string
 	ProjectId    string
 	TargetBranch string
 	DomainName   string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 type GetEnvByGitParams struct {
@@ -33,8 +37,8 @@ type ListEnvsParams struct {
 	Offset    int64
 }
 
-type SaveEnvParams = CreateEnvParams
-
 type SaveEnvResponse struct {
-	Id string
+	Id        string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }

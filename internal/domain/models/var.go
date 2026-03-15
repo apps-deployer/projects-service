@@ -1,6 +1,15 @@
 package models
 
+import "time"
+
 type Var struct {
+	Id        string
+	Key       string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+type ResolvedVar struct {
 	Id    string
 	Key   string
 	Value string
@@ -36,5 +45,7 @@ type UpdateVarParams struct {
 }
 
 type SaveVarResponse struct {
-	Id string
+	Id        string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }

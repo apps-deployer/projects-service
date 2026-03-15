@@ -11,7 +11,7 @@ import (
 type FrameworkStorage interface {
 	Framework(ctx context.Context, id string) (*models.Framework, error)
 	ListFrameworks(ctx context.Context, args *models.ListFrameworksParams) ([]*models.Framework, error)
-	SaveFramework(ctx context.Context, args *models.SaveFrameworkParams) (*models.SaveFrameworkResponse, error)
+	SaveFramework(ctx context.Context, args *models.CreateFrameworkParams) (*models.SaveFrameworkResponse, error)
 	UpdateFramework(ctx context.Context, args *models.UpdateFrameworkParams) error
 	DeleteFramework(ctx context.Context, id string) error
 }
@@ -76,6 +76,8 @@ func (f *Frameworks) Create(ctx context.Context, args *models.CreateFrameworkPar
 		InstallCmd: args.InstallCmd,
 		BuildCmd:   args.BuildCmd,
 		RunCmd:     args.RunCmd,
+		CreatedAt:  res.CreatedAt,
+		UpdatedAt:  res.UpdatedAt,
 	}, nil
 }
 
