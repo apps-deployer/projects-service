@@ -13,11 +13,12 @@ import (
 )
 
 func main() {
-	var dbUrl, migrationsPath, migrationsTable string
+	var dbUrl, migrationsPath, migrationsTable, sslMode string
 
-	flag.StringVar(&dbUrl, "db-url", "", "postgres connection string")
-	flag.StringVar(&migrationsPath, "migrations-path", "./migrations", "path to migrations")
-	flag.StringVar(&migrationsTable, "migrations-table", "migrations", "name of migrations table")
+	flag.StringVar(&dbUrl, "url", "", "postgres connection string")
+	flag.StringVar(&migrationsPath, "path", "./migrations", "path to migrations")
+	flag.StringVar(&migrationsTable, "table", "migrations", "name of migrations table")
+	flag.StringVar(&sslMode, "ssl", "disable", "SSL mode")
 	flag.Parse()
 
 	if dbUrl == "" {
@@ -26,7 +27,7 @@ func main() {
 
 	m, err := migrate.New(
 		"file://"+migrationsPath,
-		fmt.Sprintf("%s?x-migrations-table=%s", dbUrl, migrationsTable),
+		fmt.Sprintf("%s?x-migrations-table=%s&sslmode=%s", dbUrl, migrationsTable, sslMode),
 	)
 	if err != nil {
 		panic(err)
