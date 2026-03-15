@@ -21,21 +21,35 @@ type DeployConfigStorage interface {
 	DeleteDeployConfig(ctx context.Context, projectId string) error
 }
 
+type UnitOfWork interface {
+	Projects() ProjectStorage
+	DeployConfigs() DeployConfigStorage
+	Commit(ctx context.Context) error
+	Rollback(ctx context.Context) error
+}
+
+type UnitOfWorkFactory interface {
+	Begin(ctx context.Context) (UnitOfWork, error)
+}
+
 type Projects struct {
 	log           *slog.Logger
 	projects      ProjectStorage
 	deployConfigs DeployConfigStorage
+	uowFactory    UnitOfWorkFactory
 }
 
 func New(
 	log *slog.Logger,
 	projects ProjectStorage,
 	deployConfigs DeployConfigStorage,
+	uowFactory UnitOfWorkFactory,
 ) *Projects {
 	return &Projects{
 		log:           log,
 		projects:      projects,
 		deployConfigs: deployConfigs,
+		uowFactory:    uowFactory,
 	}
 }
 
@@ -80,20 +94,37 @@ func (p *Projects) Create(ctx context.Context, args *models.CreateProjectParams)
 		slog.String("repoUrl", args.RepoUrl),
 	)
 	log.Info("creating project")
+	uow, err := p.uowFactory.Begin(ctx)
+	if err != nil {
+		log.Error("failed to begin transaction", sl.Err(err))
+		return nil, err
+	}
+	defer func() {
+		if err != nil {
+			if err = uow.Rollback(ctx); err != nil {
+				log.Error("rollback failed", sl.Err(err))
+			}
+		}
+	}()
 	project := &models.SaveProjectParams{
 		Name:    args.Name,
 		RepoUrl: args.RepoUrl,
 		OwnerId: args.OwnerId,
 	}
-	res, err := p.projects.SaveProject(ctx, project)
+	res, err := uow.Projects().SaveProject(ctx, project)
 	if err != nil {
 		log.Error("failed to save project", sl.Err(err))
 		return nil, err
 	}
-	_, err = p.deployConfigs.SaveDeployConfig(
+	_, err = uow.DeployConfigs().SaveDeployConfig(
 		ctx, &models.SaveDeployConfigParams{ProjectId: res.Id, FrameworkId: args.FrameworkId})
 	if err != nil {
 		log.Error("failed to save deploy config", sl.Err(err))
+		return nil, err
+	}
+	err = uow.Commit(ctx)
+	if err != nil {
+		log.Error("commit failed", sl.Err(err))
 		return nil, err
 	}
 	return &models.Project{
