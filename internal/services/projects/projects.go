@@ -8,7 +8,7 @@ import (
 	"github.com/apps-deployer/projects-service/internal/lib/logger/sl"
 )
 
-type ProjectStorage interface {
+type ProjectRepository interface {
 	Project(ctx context.Context, id string) (*models.Project, error)
 	ListProjects(ctx context.Context, args *models.ListProjectsParams) ([]*models.Project, error)
 	SaveProject(ctx context.Context, args *models.SaveProjectParams) (*models.SaveProjectResponse, error)
@@ -16,40 +16,38 @@ type ProjectStorage interface {
 	DeleteProject(ctx context.Context, id string) error
 }
 
-type DeployConfigStorage interface {
+type DeployConfigRepository interface {
 	SaveDeployConfig(ctx context.Context, args *models.SaveDeployConfigParams) (id string, err error)
 	DeleteDeployConfig(ctx context.Context, projectId string) error
 }
 
-type UnitOfWork interface {
-	Projects() ProjectStorage
-	DeployConfigs() DeployConfigStorage
-	Commit(ctx context.Context) error
-	Rollback(ctx context.Context) error
+type Storage interface {
+	Projects() ProjectRepository
+	DeployConfigs() DeployConfigRepository
+
+	WithinTx(
+		ctx context.Context,
+		fn func(TxStorage) (*models.SaveProjectResponse, error),
+	) (*models.SaveProjectResponse, error)
 }
 
-type UnitOfWorkFactory interface {
-	Begin(ctx context.Context) (UnitOfWork, error)
+type TxStorage interface {
+	Projects() ProjectRepository
+	DeployConfigs() DeployConfigRepository
 }
 
 type Projects struct {
-	log           *slog.Logger
-	projects      ProjectStorage
-	deployConfigs DeployConfigStorage
-	uowFactory    UnitOfWorkFactory
+	log     *slog.Logger
+	storage Storage
 }
 
 func New(
 	log *slog.Logger,
-	projects ProjectStorage,
-	deployConfigs DeployConfigStorage,
-	uowFactory UnitOfWorkFactory,
+	storage Storage,
 ) *Projects {
 	return &Projects{
-		log:           log,
-		projects:      projects,
-		deployConfigs: deployConfigs,
-		uowFactory:    uowFactory,
+		log:     log,
+		storage: storage,
 	}
 }
 
@@ -61,7 +59,7 @@ func (p *Projects) Get(ctx context.Context, id string) (*models.Project, error) 
 		slog.String("id", id),
 	)
 	log.Info("getting project")
-	res, err := p.projects.Project(ctx, id)
+	res, err := p.storage.Projects().Project(ctx, id)
 	if err != nil {
 		log.Error("failed to get project", sl.Err(err))
 		return nil, err
@@ -77,7 +75,7 @@ func (p *Projects) List(ctx context.Context, args *models.ListProjectsParams) ([
 		slog.String("ownerId", args.OwnerId),
 	)
 	log.Info("listing projects")
-	res, err := p.projects.ListProjects(ctx, args)
+	res, err := p.storage.Projects().ListProjects(ctx, args)
 	if err != nil {
 		log.Error("failed to list projects", sl.Err(err))
 		return nil, err
@@ -94,47 +92,32 @@ func (p *Projects) Create(ctx context.Context, args *models.CreateProjectParams)
 		slog.String("repoUrl", args.RepoUrl),
 	)
 	log.Info("creating project")
-	uow, err := p.uowFactory.Begin(ctx)
-	if err != nil {
-		log.Error("failed to begin transaction", sl.Err(err))
-		return nil, err
-	}
-	defer func() {
-		if err != nil {
-			if err = uow.Rollback(ctx); err != nil {
-				log.Error("rollback failed", sl.Err(err))
-			}
-		}
-	}()
 	project := &models.SaveProjectParams{
 		Name:    args.Name,
 		RepoUrl: args.RepoUrl,
 		OwnerId: args.OwnerId,
 	}
-	res, err := uow.Projects().SaveProject(ctx, project)
+	res, err := p.storage.WithinTx(ctx, func(tx TxStorage) (*models.SaveProjectResponse, error) {
+		res, err := tx.Projects().SaveProject(ctx, project)
+		if err != nil {
+			return nil, err
+		}
+		_, err = tx.DeployConfigs().SaveDeployConfig(
+			ctx, &models.SaveDeployConfigParams{
+				ProjectId:   res.Id,
+				FrameworkId: args.FrameworkId,
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
+	})
 	if err != nil {
-		log.Error("failed to save project", sl.Err(err))
+		log.Error("failed to create project", sl.Err(err))
 		return nil, err
 	}
-	_, err = uow.DeployConfigs().SaveDeployConfig(
-		ctx, &models.SaveDeployConfigParams{ProjectId: res.Id, FrameworkId: args.FrameworkId})
-	if err != nil {
-		log.Error("failed to save deploy config", sl.Err(err))
-		return nil, err
-	}
-	err = uow.Commit(ctx)
-	if err != nil {
-		log.Error("commit failed", sl.Err(err))
-		return nil, err
-	}
-	return &models.Project{
-		Id:        res.Id,
-		Name:      args.Name,
-		RepoUrl:   args.RepoUrl,
-		OwnerId:   args.OwnerId,
-		CreatedAt: res.CreatedAt,
-		UpdatedAt: res.UpdatedAt,
-	}, nil
+	return models.NewProjectFromSaveResponse(project, res), nil
 }
 
 func (p *Projects) Update(ctx context.Context, args *models.UpdateProjectParams) error {
@@ -145,7 +128,7 @@ func (p *Projects) Update(ctx context.Context, args *models.UpdateProjectParams)
 		slog.String("id", args.Id),
 	)
 	log.Info("updating project")
-	err := p.projects.UpdateProject(ctx, args)
+	err := p.storage.Projects().UpdateProject(ctx, args)
 	if err != nil {
 		log.Error("failed to update project", sl.Err(err))
 		return err
@@ -161,7 +144,7 @@ func (p *Projects) Delete(ctx context.Context, id string) error {
 		slog.String("id", id),
 	)
 	log.Info("deleting project")
-	err := p.projects.DeleteProject(ctx, id)
+	err := p.storage.Projects().DeleteProject(ctx, id)
 	if err != nil {
 		log.Error("failed to delete project", sl.Err(err))
 		return err
