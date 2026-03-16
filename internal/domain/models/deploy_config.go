@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type DeployConfig struct {
 	Id                 string
@@ -41,4 +43,27 @@ type ResolvedDeployConfig struct {
 type SaveDeployConfigParams struct {
 	ProjectId   string
 	FrameworkId string
+}
+
+func NewResolvedDeployConfig(
+	config *DeployConfig,
+	framework *Framework,
+) *ResolvedDeployConfig {
+	return &ResolvedDeployConfig{
+		Id:         config.Id,
+		ProjectId:  config.ProjectId,
+		RootDir:    pick(config.RootDirOverride, framework.RootDir),
+		OutputDir:  pick(config.OutputDirOverride, framework.OutputDir),
+		BaseImage:  pick(config.BaseImageOverride, framework.BaseImage),
+		InstallCmd: pick(config.InstallCmdOverride, framework.InstallCmd),
+		BuildCmd:   pick(config.BuildCmdOverride, framework.BuildCmd),
+		RunCmd:     pick(config.RunCmdOverride, framework.RunCmd),
+	}
+}
+
+func pick(override, base string) string {
+	if override != "" {
+		return override
+	}
+	return base
 }

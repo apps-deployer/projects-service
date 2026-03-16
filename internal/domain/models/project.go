@@ -44,3 +44,17 @@ type SaveProjectResponse struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
+
+func NewProjectFromSaveResponse(
+	args *SaveProjectParams,
+	res *SaveProjectResponse,
+) *Project {
+	return &Project{
+		Id:        res.Id,
+		Name:      args.Name,
+		RepoUrl:   args.RepoUrl,
+		OwnerId:   args.OwnerId,
+		CreatedAt: res.CreatedAt,
+		UpdatedAt: res.UpdatedAt,
+	}
+}

@@ -8,63 +8,65 @@ import (
 	"github.com/apps-deployer/projects-service/internal/lib/logger/sl"
 )
 
-type DeployConfigStorage interface {
+type Storage interface {
+	DeployConfigs() DeployConfigRepository
+	Frameworks() FrameworkRepository
+
+	WithinTx(
+		ctx context.Context,
+		fn func(TxStorage) (*models.ResolvedDeployConfig, error),
+	) (*models.ResolvedDeployConfig, error)
+}
+
+type TxStorage interface {
+	DeployConfigs() DeployConfigRepository
+	Frameworks() FrameworkRepository
+}
+
+type DeployConfigRepository interface {
 	DeployConfig(ctx context.Context, projectId string) (*models.DeployConfig, error)
 	UpdateDeployConfig(ctx context.Context, args *models.UpdateDeployConfigParams) error
 }
 
-type FrameworkStorage interface {
+type FrameworkRepository interface {
 	Framework(ctx context.Context, id string) (*models.Framework, error)
 }
 
 type DeployConfigs struct {
-	log           *slog.Logger
-	deployConfigs DeployConfigStorage
-	frameworks    FrameworkStorage
+	log     *slog.Logger
+	storage Storage
 }
 
-func New(log *slog.Logger, deployConfigs DeployConfigStorage, frameworks FrameworkStorage) *DeployConfigs {
-	return &DeployConfigs{log: log, deployConfigs: deployConfigs, frameworks: frameworks}
+func New(log *slog.Logger, storage Storage) *DeployConfigs {
+	return &DeployConfigs{
+		log:     log,
+		storage: storage,
+	}
 }
 
 func (c *DeployConfigs) Generate(ctx context.Context, projectId string) (*models.ResolvedDeployConfig, error) {
 	// TODO: Auth
-
 	op := "DeployConfigs.Generate"
 	log := c.log.With(
 		slog.String("op", op),
 		slog.String("projectId", projectId),
 	)
-	log.Info("generating deploy config")
-
-	config, err := c.deployConfigs.DeployConfig(ctx, projectId)
+	log.Info("resolving deploy config")
+	res, err := c.storage.WithinTx(ctx, func(tx TxStorage) (*models.ResolvedDeployConfig, error) {
+		config, err := tx.DeployConfigs().DeployConfig(ctx, projectId)
+		if err != nil {
+			return nil, err
+		}
+		framework, err := tx.Frameworks().Framework(ctx, config.FrameworkId)
+		if err != nil {
+			return nil, err
+		}
+		return models.NewResolvedDeployConfig(config, framework), nil
+	})
 	if err != nil {
-		log.Error("failed to get deploy config", sl.Err(err))
-		return nil, err
-	}
-	framework, err := c.frameworks.Framework(ctx, config.FrameworkId)
-	if err != nil {
-		log.Error("failed to get framework", sl.Err(err))
-		return nil, err
-	}
-	res := &models.ResolvedDeployConfig{
-		Id:         config.Id,
-		ProjectId:  config.ProjectId,
-		RootDir:    pick(config.RootDirOverride, framework.RootDir),
-		OutputDir:  pick(config.OutputDirOverride, framework.OutputDir),
-		BaseImage:  pick(config.BaseImageOverride, framework.BaseImage),
-		InstallCmd: pick(config.InstallCmdOverride, framework.InstallCmd),
-		BuildCmd:   pick(config.BuildCmdOverride, framework.BuildCmd),
-		RunCmd:     pick(config.RunCmdOverride, framework.RunCmd),
+		log.Error("failed to resolve deploy config", sl.Err(err))
 	}
 	return res, nil
-}
-
-func pick(override, base string) string {
-	if override != "" {
-		return override
-	}
-	return base
 }
 
 func (c *DeployConfigs) Get(ctx context.Context, projectId string) (*models.DeployConfig, error) {
@@ -76,7 +78,7 @@ func (c *DeployConfigs) Get(ctx context.Context, projectId string) (*models.Depl
 	)
 	log.Info("getting deploy config")
 
-	config, err := c.deployConfigs.DeployConfig(ctx, projectId)
+	config, err := c.storage.DeployConfigs().DeployConfig(ctx, projectId)
 	if err != nil {
 		log.Error("failed to get deploy config", sl.Err(err))
 		return nil, err
@@ -92,7 +94,7 @@ func (c *DeployConfigs) Update(ctx context.Context, args *models.UpdateDeployCon
 	)
 	log.Info("updating deploy config")
 
-	err := c.deployConfigs.UpdateDeployConfig(ctx, args)
+	err := c.storage.DeployConfigs().UpdateDeployConfig(ctx, args)
 	if err != nil {
 		log.Error("failed to update deploy config", sl.Err(err))
 		return err
