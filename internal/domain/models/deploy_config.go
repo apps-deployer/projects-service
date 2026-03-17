@@ -45,6 +45,12 @@ type SaveDeployConfigParams struct {
 	FrameworkId string
 }
 
+type SaveDeployConfigResponse struct {
+	Id        string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
 func NewResolvedDeployConfig(
 	config *DeployConfig,
 	framework *Framework,

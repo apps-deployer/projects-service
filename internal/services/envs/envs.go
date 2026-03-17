@@ -8,7 +8,11 @@ import (
 	"github.com/apps-deployer/projects-service/internal/lib/logger/sl"
 )
 
-type EnvStorage interface {
+type Storage interface {
+	Envs() EnvRepository
+}
+
+type EnvRepository interface {
 	Env(ctx context.Context, id string) (*models.Env, error)
 	EnvByGit(ctx context.Context, repoUrl string, branch string) (*models.Env, error)
 	ListEnvs(ctx context.Context, args *models.ListEnvsParams) ([]*models.Env, error)
@@ -18,12 +22,15 @@ type EnvStorage interface {
 }
 
 type Envs struct {
-	log  *slog.Logger
-	envs EnvStorage
+	log     *slog.Logger
+	storage Storage
 }
 
-func New(log *slog.Logger, envs EnvStorage) *Envs {
-	return &Envs{log: log, envs: envs}
+func New(log *slog.Logger, storage Storage) *Envs {
+	return &Envs{
+		log:     log,
+		storage: storage,
+	}
 }
 
 func (e *Envs) GetByGit(ctx context.Context, args *models.GetEnvByGitParams) (*models.Env, error) {
@@ -35,7 +42,7 @@ func (e *Envs) GetByGit(ctx context.Context, args *models.GetEnvByGitParams) (*m
 		slog.String("targetBranch", args.TargetBranch),
 	)
 	log.Info("getting env by git")
-	env, err := e.envs.EnvByGit(ctx, args.RepoUrl, args.TargetBranch)
+	env, err := e.storage.Envs().EnvByGit(ctx, args.RepoUrl, args.TargetBranch)
 	if err != nil {
 		log.Error("failed to get env by git", sl.Err(err))
 		return nil, err
@@ -51,7 +58,7 @@ func (e *Envs) Get(ctx context.Context, id string) (*models.Env, error) {
 		slog.String("id", id),
 	)
 	log.Info("getting env")
-	env, err := e.envs.Env(ctx, id)
+	env, err := e.storage.Envs().Env(ctx, id)
 	if err != nil {
 		log.Error("failed to get env", sl.Err(err))
 		return nil, err
@@ -67,7 +74,7 @@ func (e *Envs) List(ctx context.Context, args *models.ListEnvsParams) ([]*models
 		slog.String("projectId", args.ProjectId),
 	)
 	log.Info("listing envs")
-	envs, err := e.envs.ListEnvs(ctx, args)
+	envs, err := e.storage.Envs().ListEnvs(ctx, args)
 	if err != nil {
 		log.Error("failed to list envs", sl.Err(err))
 		return nil, err
@@ -84,25 +91,12 @@ func (e *Envs) Create(ctx context.Context, args *models.CreateEnvParams) (*model
 		slog.String("targetBranch", args.TargetBranch),
 	)
 	log.Info("creating env")
-	res, err := e.envs.SaveEnv(ctx, &models.CreateEnvParams{
-		Name:         args.Name,
-		ProjectId:    args.ProjectId,
-		TargetBranch: args.TargetBranch,
-		DomainName:   args.DomainName,
-	})
+	res, err := e.storage.Envs().SaveEnv(ctx, args)
 	if err != nil {
 		log.Error("failed to create env", sl.Err(err))
 		return nil, err
 	}
-	return &models.Env{
-		Id:           res.Id,
-		Name:         args.Name,
-		ProjectId:    args.ProjectId,
-		TargetBranch: args.TargetBranch,
-		DomainName:   args.DomainName,
-		CreatedAt:    res.CreatedAt,
-		UpdatedAt:    res.UpdatedAt,
-	}, nil
+	return models.NewEnvFromSaveResponse(args, res), nil
 }
 
 func (e *Envs) Update(ctx context.Context, args *models.UpdateEnvParams) error {
@@ -113,7 +107,7 @@ func (e *Envs) Update(ctx context.Context, args *models.UpdateEnvParams) error {
 		slog.String("id", args.Id),
 	)
 	log.Info("updating env")
-	err := e.envs.UpdateEnv(ctx, args)
+	err := e.storage.Envs().UpdateEnv(ctx, args)
 	if err != nil {
 		log.Error("failed to update env", sl.Err(err))
 		return err
@@ -129,7 +123,7 @@ func (e *Envs) Delete(ctx context.Context, id string) error {
 		slog.String("id", id),
 	)
 	log.Info("deleting env")
-	err := e.envs.DeleteEnv(ctx, id)
+	err := e.storage.Envs().DeleteEnv(ctx, id)
 	if err != nil {
 		log.Error("failed to delete env", sl.Err(err))
 		return err

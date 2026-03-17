@@ -49,3 +49,15 @@ type SaveVarResponse struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
+
+func NewVarFromSaveResponse(
+	key string,
+	res *SaveVarResponse,
+) *Var {
+	return &Var{
+		Id:        res.Id,
+		Key:       key,
+		CreatedAt: res.CreatedAt,
+		UpdatedAt: res.UpdatedAt,
+	}
+}

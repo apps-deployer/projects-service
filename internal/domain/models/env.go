@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type Env struct {
 	Id           string
@@ -41,4 +43,19 @@ type SaveEnvResponse struct {
 	Id        string
 	CreatedAt time.Time
 	UpdatedAt time.Time
+}
+
+func NewEnvFromSaveResponse(
+	args *CreateEnvParams,
+	res *SaveEnvResponse,
+) *Env {
+	return &Env{
+		Id:           res.Id,
+		Name:         args.Name,
+		ProjectId:    args.ProjectId,
+		TargetBranch: args.TargetBranch,
+		DomainName:   args.DomainName,
+		CreatedAt:    res.CreatedAt,
+		UpdatedAt:    res.UpdatedAt,
+	}
 }

@@ -7,41 +7,38 @@ import (
 	"github.com/apps-deployer/projects-service/internal/domain/models"
 )
 
-type ProjectVarStorage interface {
+type Storage interface {
+	ProjectVars() ProjectVarRepository
+	EnvVars() EnvVarRepository
+	ResolvedVars() ResolvedVarsRepository
+}
+
+type ProjectVarRepository interface {
 	ListProjectVars(ctx context.Context, args *models.ListProjectVarsParams) ([]*models.Var, error)
 	SaveProjectVar(ctx context.Context, args *models.CreateProjectVarParams) (*models.SaveVarResponse, error)
 	UpdateProjectVar(ctx context.Context, args *models.UpdateVarParams) error
 	DeleteProjectVar(ctx context.Context, id string) error
 }
 
-type EnvVarStorage interface {
+type EnvVarRepository interface {
 	ListEnvVars(ctx context.Context, args *models.ListEnvVarsParams) ([]*models.Var, error)
 	SaveEnvVar(ctx context.Context, args *models.CreateEnvVarParams) (*models.SaveVarResponse, error)
 	UpdateEnvVar(ctx context.Context, args *models.UpdateVarParams) error
 	DeleteEnvVar(ctx context.Context, id string) error
 }
 
-type ResolvedVarsProvider interface {
+type ResolvedVarsRepository interface {
 	ResolvedVars(ctx context.Context, envId string) ([]*models.Var, error)
 }
 
 type Vars struct {
-	log          *slog.Logger
-	projectVars  ProjectVarStorage
-	envVars      EnvVarStorage
-	resolvedVars ResolvedVarsProvider
+	log     *slog.Logger
+	storage Storage
 }
 
-func New(
-	log *slog.Logger,
-	projectVars ProjectVarStorage,
-	envVars EnvVarStorage,
-	resolvedVars ResolvedVarsProvider,
-) *Vars {
+func New(log *slog.Logger, storage Storage) *Vars {
 	return &Vars{
-		log:          log,
-		projectVars:  projectVars,
-		envVars:      envVars,
-		resolvedVars: resolvedVars,
+		log:     log,
+		storage: storage,
 	}
 }

@@ -8,19 +8,6 @@ import (
 	"github.com/apps-deployer/projects-service/internal/lib/logger/sl"
 )
 
-type ProjectRepository interface {
-	Project(ctx context.Context, id string) (*models.Project, error)
-	ListProjects(ctx context.Context, args *models.ListProjectsParams) ([]*models.Project, error)
-	SaveProject(ctx context.Context, args *models.SaveProjectParams) (*models.SaveProjectResponse, error)
-	UpdateProject(ctx context.Context, args *models.UpdateProjectParams) error
-	DeleteProject(ctx context.Context, id string) error
-}
-
-type DeployConfigRepository interface {
-	SaveDeployConfig(ctx context.Context, args *models.SaveDeployConfigParams) (id string, err error)
-	DeleteDeployConfig(ctx context.Context, projectId string) error
-}
-
 type Storage interface {
 	Projects() ProjectRepository
 	DeployConfigs() DeployConfigRepository
@@ -34,6 +21,19 @@ type Storage interface {
 type TxStorage interface {
 	Projects() ProjectRepository
 	DeployConfigs() DeployConfigRepository
+}
+
+type ProjectRepository interface {
+	Project(ctx context.Context, id string) (*models.Project, error)
+	ListProjects(ctx context.Context, args *models.ListProjectsParams) ([]*models.Project, error)
+	SaveProject(ctx context.Context, args *models.SaveProjectParams) (*models.SaveProjectResponse, error)
+	UpdateProject(ctx context.Context, args *models.UpdateProjectParams) error
+	DeleteProject(ctx context.Context, id string) error
+}
+
+type DeployConfigRepository interface {
+	SaveDeployConfig(ctx context.Context, args *models.SaveDeployConfigParams) (*models.SaveDeployConfigResponse, error)
+	DeleteDeployConfig(ctx context.Context, projectId string) error
 }
 
 type Projects struct {

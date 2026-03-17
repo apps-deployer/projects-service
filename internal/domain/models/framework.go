@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type Framework struct {
 	Id         string
@@ -45,4 +47,22 @@ type SaveFrameworkResponse struct {
 	Id        string
 	CreatedAt time.Time
 	UpdatedAt time.Time
+}
+
+func NewFrameworkFromSaveResponse(
+	args *CreateFrameworkParams,
+	res *SaveFrameworkResponse,
+) *Framework {
+	return &Framework{
+		Id:         res.Id,
+		Name:       args.Name,
+		RootDir:    args.RootDir,
+		OutputDir:  args.OutputDir,
+		BaseImage:  args.BaseImage,
+		InstallCmd: args.InstallCmd,
+		BuildCmd:   args.BuildCmd,
+		RunCmd:     args.RunCmd,
+		CreatedAt:  res.CreatedAt,
+		UpdatedAt:  res.UpdatedAt,
+	}
 }

@@ -44,7 +44,7 @@ func New(log *slog.Logger, storage Storage) *DeployConfigs {
 	}
 }
 
-func (c *DeployConfigs) Generate(ctx context.Context, projectId string) (*models.ResolvedDeployConfig, error) {
+func (c *DeployConfigs) Resolve(ctx context.Context, projectId string) (*models.ResolvedDeployConfig, error) {
 	// TODO: Auth
 	op := "DeployConfigs.Generate"
 	log := c.log.With(
