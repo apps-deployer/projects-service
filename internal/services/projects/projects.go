@@ -6,43 +6,18 @@ import (
 
 	"github.com/apps-deployer/projects-service/internal/domain/models"
 	"github.com/apps-deployer/projects-service/internal/lib/logger/sl"
+	"github.com/apps-deployer/projects-service/internal/services"
 )
-
-type Storage interface {
-	Repos() RepoFactory
-	WithinTx(
-		ctx context.Context,
-		fn func(RepoFactory) error,
-	) error
-}
-
-type RepoFactory interface {
-	Projects() ProjectRepository
-	DeployConfigs() DeployConfigRepository
-}
-
-type ProjectRepository interface {
-	Project(ctx context.Context, id string) (*models.Project, error)
-	ListProjects(ctx context.Context, args *models.ListProjectsParams) ([]*models.Project, error)
-	SaveProject(ctx context.Context, args *models.SaveProjectParams) (*models.SaveProjectResponse, error)
-	UpdateProject(ctx context.Context, args *models.UpdateProjectParams) error
-	DeleteProject(ctx context.Context, id string) error
-}
-
-type DeployConfigRepository interface {
-	SaveDeployConfig(ctx context.Context, args *models.SaveDeployConfigParams) (*models.SaveDeployConfigResponse, error)
-	DeleteDeployConfig(ctx context.Context, projectId string) error
-}
 
 type Projects struct {
 	log      *slog.Logger
-	storage  Storage
-	projects ProjectRepository
+	storage  services.Storage
+	projects services.ProjectRepository
 }
 
 func New(
 	log *slog.Logger,
-	storage Storage,
+	storage services.Storage,
 ) *Projects {
 	return &Projects{
 		log:      log,
@@ -98,7 +73,7 @@ func (p *Projects) Create(ctx context.Context, args *models.CreateProjectParams)
 		OwnerId: args.OwnerId,
 	}
 	var response *models.SaveProjectResponse
-	err := p.storage.WithinTx(ctx, func(tx RepoFactory) error {
+	err := p.storage.WithinTx(ctx, func(tx services.RepoFactory) error {
 		res, err := tx.Projects().SaveProject(ctx, project)
 		if err != nil {
 			return err

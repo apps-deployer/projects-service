@@ -1,4 +1,4 @@
-package deployconfigs
+package deployconfigsgrpc
 
 import (
 	"github.com/apps-deployer/projects-service/internal/domain/models"

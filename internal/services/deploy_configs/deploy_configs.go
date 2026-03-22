@@ -6,37 +6,16 @@ import (
 
 	"github.com/apps-deployer/projects-service/internal/domain/models"
 	"github.com/apps-deployer/projects-service/internal/lib/logger/sl"
+	"github.com/apps-deployer/projects-service/internal/services"
 )
-
-type Storage interface {
-	Repos() RepoFactory
-	WithinTx(
-		ctx context.Context,
-		fn func(RepoFactory) error,
-	) error
-}
-
-type RepoFactory interface {
-	DeployConfigs() DeployConfigRepository
-	Frameworks() FrameworkRepository
-}
-
-type DeployConfigRepository interface {
-	DeployConfig(ctx context.Context, projectId string) (*models.DeployConfig, error)
-	UpdateDeployConfig(ctx context.Context, args *models.UpdateDeployConfigParams) error
-}
-
-type FrameworkRepository interface {
-	Framework(ctx context.Context, id string) (*models.Framework, error)
-}
 
 type DeployConfigs struct {
 	log     *slog.Logger
-	storage Storage
-	dc      DeployConfigRepository
+	storage services.Storage
+	dc      services.DeployConfigRepository
 }
 
-func New(log *slog.Logger, storage Storage) *DeployConfigs {
+func New(log *slog.Logger, storage services.Storage) *DeployConfigs {
 	return &DeployConfigs{
 		log:     log,
 		storage: storage,
@@ -53,7 +32,7 @@ func (c *DeployConfigs) Resolve(ctx context.Context, projectId string) (*models.
 	)
 	log.Info("resolving deploy config")
 	var res *models.ResolvedDeployConfig
-	err := c.storage.WithinTx(ctx, func(tx RepoFactory) error {
+	err := c.storage.WithinTx(ctx, func(tx services.RepoFactory) error {
 		config, err := tx.DeployConfigs().DeployConfig(ctx, projectId)
 		if err != nil {
 			return err

@@ -1,4 +1,4 @@
-package deployconfigs
+package deployconfigsgrpc
 
 import (
 	"context"

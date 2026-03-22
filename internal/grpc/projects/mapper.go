@@ -1,4 +1,4 @@
-package projects
+package projectsgrpc
 
 import (
 	"github.com/apps-deployer/projects-service/internal/domain/models"

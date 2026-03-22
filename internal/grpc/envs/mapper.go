@@ -1,4 +1,4 @@
-package envs
+package envsgrpc
 
 import (
 	"github.com/apps-deployer/projects-service/internal/domain/models"

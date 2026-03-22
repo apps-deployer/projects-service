@@ -1,4 +1,4 @@
-package frameworks
+package frameworksgrpc
 
 import (
 	"github.com/apps-deployer/projects-service/internal/domain/models"

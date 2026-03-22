@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/apps-deployer/projects-service/internal/services"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -31,13 +32,13 @@ func (s *Storage) Close() {
 	s.pool.Close()
 }
 
-func (s *Storage) Repos() *RepoFactory {
+func (s *Storage) Repos() services.RepoFactory {
 	return newRepoFactory(s.pool)
 }
 
 func (s *Storage) WithinTx(
 	ctx context.Context,
-	fn func(*RepoFactory) error,
+	fn func(services.RepoFactory) error,
 ) error {
 	const op = "storage.postgres.Storage.WithinTx"
 	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{})

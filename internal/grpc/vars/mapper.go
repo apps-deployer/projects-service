@@ -1,4 +1,4 @@
-package vars
+package varsgrpc
 
 import (
 	"github.com/apps-deployer/projects-service/internal/domain/models"

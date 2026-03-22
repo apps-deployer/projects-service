@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 
+	"github.com/apps-deployer/projects-service/internal/services"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -28,30 +29,30 @@ func newRepoFactory(executor QueryExecutor) *RepoFactory {
 	}
 }
 
-func (rf *RepoFactory) Projects() *Repo {
+func (rf *RepoFactory) Projects() services.ProjectRepository {
 	return rf.repo
 }
 
-func (rf *RepoFactory) Frameworks() *Repo {
+func (rf *RepoFactory) Frameworks() services.FrameworkRepository {
 	return rf.repo
 }
 
-func (rf *RepoFactory) DeployConfigs() *Repo {
+func (rf *RepoFactory) DeployConfigs() services.DeployConfigRepository {
 	return rf.repo
 }
 
-func (rf *RepoFactory) Envs() *Repo {
+func (rf *RepoFactory) Envs() services.EnvRepository {
 	return rf.repo
 }
 
-func (rf *RepoFactory) EnvVars() *Repo {
+func (rf *RepoFactory) EnvVars() services.EnvVarRepository {
 	return rf.repo
 }
 
-func (rf *RepoFactory) ProjectVars() *Repo {
+func (rf *RepoFactory) ProjectVars() services.ProjectVarRepository {
 	return rf.repo
 }
 
-func (rf *RepoFactory) ResolvedVars() *Repo {
+func (rf *RepoFactory) ResolvedVars() services.ResolvedVarsRepository {
 	return rf.repo
 }

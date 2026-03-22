@@ -1,4 +1,4 @@
-package frameworks
+package frameworksgrpc
 
 import (
 	"context"

@@ -6,30 +6,15 @@ import (
 
 	"github.com/apps-deployer/projects-service/internal/domain/models"
 	"github.com/apps-deployer/projects-service/internal/lib/logger/sl"
+	"github.com/apps-deployer/projects-service/internal/services"
 )
-
-type Storage interface {
-	Repos() RepoFactory
-}
-
-type RepoFactory interface {
-	Frameworks() FrameworkRepository
-}
-
-type FrameworkRepository interface {
-	Framework(ctx context.Context, id string) (*models.Framework, error)
-	ListFrameworks(ctx context.Context, args *models.ListFrameworksParams) ([]*models.Framework, error)
-	SaveFramework(ctx context.Context, args *models.CreateFrameworkParams) (*models.SaveFrameworkResponse, error)
-	UpdateFramework(ctx context.Context, args *models.UpdateFrameworkParams) error
-	DeleteFramework(ctx context.Context, id string) error
-}
 
 type Frameworks struct {
 	log        *slog.Logger
-	frameworks FrameworkRepository
+	frameworks services.FrameworkRepository
 }
 
-func New(log *slog.Logger, storage Storage) *Frameworks {
+func New(log *slog.Logger, storage services.Storage) *Frameworks {
 	return &Frameworks{
 		log:        log,
 		frameworks: storage.Repos().Frameworks(),

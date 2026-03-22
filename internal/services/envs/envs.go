@@ -6,31 +6,15 @@ import (
 
 	"github.com/apps-deployer/projects-service/internal/domain/models"
 	"github.com/apps-deployer/projects-service/internal/lib/logger/sl"
+	"github.com/apps-deployer/projects-service/internal/services"
 )
-
-type Storage interface {
-	Repos() RepoFactory
-}
-
-type RepoFactory interface {
-	Envs() EnvRepository
-}
-
-type EnvRepository interface {
-	Env(ctx context.Context, id string) (*models.Env, error)
-	EnvByGit(ctx context.Context, repoUrl string, branch string) (*models.Env, error)
-	ListEnvs(ctx context.Context, args *models.ListEnvsParams) ([]*models.Env, error)
-	SaveEnv(ctx context.Context, args *models.CreateEnvParams) (*models.SaveEnvResponse, error)
-	UpdateEnv(ctx context.Context, args *models.UpdateEnvParams) error
-	DeleteEnv(ctx context.Context, id string) error
-}
 
 type Envs struct {
 	log  *slog.Logger
-	envs EnvRepository
+	envs services.EnvRepository
 }
 
-func New(log *slog.Logger, storage Storage) *Envs {
+func New(log *slog.Logger, storage services.Storage) *Envs {
 	return &Envs{
 		log:  log,
 		envs: storage.Repos().Envs(),
