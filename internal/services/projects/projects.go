@@ -9,16 +9,14 @@ import (
 )
 
 type Storage interface {
-	Projects() ProjectRepository
-	DeployConfigs() DeployConfigRepository
-
+	Repos() RepoFactory
 	WithinTx(
 		ctx context.Context,
-		fn func(TxStorage) error,
+		fn func(RepoFactory) error,
 	) error
 }
 
-type TxStorage interface {
+type RepoFactory interface {
 	Projects() ProjectRepository
 	DeployConfigs() DeployConfigRepository
 }
@@ -37,8 +35,9 @@ type DeployConfigRepository interface {
 }
 
 type Projects struct {
-	log     *slog.Logger
-	storage Storage
+	log      *slog.Logger
+	storage  Storage
+	projects ProjectRepository
 }
 
 func New(
@@ -46,8 +45,9 @@ func New(
 	storage Storage,
 ) *Projects {
 	return &Projects{
-		log:     log,
-		storage: storage,
+		log:      log,
+		storage:  storage,
+		projects: storage.Repos().Projects(),
 	}
 }
 
@@ -59,7 +59,7 @@ func (p *Projects) Get(ctx context.Context, id string) (*models.Project, error) 
 		slog.String("id", id),
 	)
 	log.Info("getting project")
-	res, err := p.storage.Projects().Project(ctx, id)
+	res, err := p.projects.Project(ctx, id)
 	if err != nil {
 		log.Error("failed to get project", sl.Err(err))
 		return nil, err
@@ -75,7 +75,7 @@ func (p *Projects) List(ctx context.Context, args *models.ListProjectsParams) ([
 		slog.String("ownerId", args.OwnerId),
 	)
 	log.Info("listing projects")
-	res, err := p.storage.Projects().ListProjects(ctx, args)
+	res, err := p.projects.ListProjects(ctx, args)
 	if err != nil {
 		log.Error("failed to list projects", sl.Err(err))
 		return nil, err
@@ -98,7 +98,7 @@ func (p *Projects) Create(ctx context.Context, args *models.CreateProjectParams)
 		OwnerId: args.OwnerId,
 	}
 	var response *models.SaveProjectResponse
-	err := p.storage.WithinTx(ctx, func(tx TxStorage) error {
+	err := p.storage.WithinTx(ctx, func(tx RepoFactory) error {
 		res, err := tx.Projects().SaveProject(ctx, project)
 		if err != nil {
 			return err
@@ -130,7 +130,7 @@ func (p *Projects) Update(ctx context.Context, args *models.UpdateProjectParams)
 		slog.String("id", args.Id),
 	)
 	log.Info("updating project")
-	err := p.storage.Projects().UpdateProject(ctx, args)
+	err := p.projects.UpdateProject(ctx, args)
 	if err != nil {
 		log.Error("failed to update project", sl.Err(err))
 		return err
@@ -146,7 +146,7 @@ func (p *Projects) Delete(ctx context.Context, id string) error {
 		slog.String("id", id),
 	)
 	log.Info("deleting project")
-	err := p.storage.Projects().DeleteProject(ctx, id)
+	err := p.projects.DeleteProject(ctx, id)
 	if err != nil {
 		log.Error("failed to delete project", sl.Err(err))
 		return err

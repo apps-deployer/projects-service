@@ -9,16 +9,14 @@ import (
 )
 
 type Storage interface {
-	DeployConfigs() DeployConfigRepository
-	Frameworks() FrameworkRepository
-
+	Repos() RepoFactory
 	WithinTx(
 		ctx context.Context,
-		fn func(TxStorage) error,
+		fn func(RepoFactory) error,
 	) error
 }
 
-type TxStorage interface {
+type RepoFactory interface {
 	DeployConfigs() DeployConfigRepository
 	Frameworks() FrameworkRepository
 }
@@ -35,12 +33,14 @@ type FrameworkRepository interface {
 type DeployConfigs struct {
 	log     *slog.Logger
 	storage Storage
+	dc      DeployConfigRepository
 }
 
 func New(log *slog.Logger, storage Storage) *DeployConfigs {
 	return &DeployConfigs{
 		log:     log,
 		storage: storage,
+		dc:      storage.Repos().DeployConfigs(),
 	}
 }
 
@@ -53,7 +53,7 @@ func (c *DeployConfigs) Resolve(ctx context.Context, projectId string) (*models.
 	)
 	log.Info("resolving deploy config")
 	var res *models.ResolvedDeployConfig
-	err := c.storage.WithinTx(ctx, func(tx TxStorage) error {
+	err := c.storage.WithinTx(ctx, func(tx RepoFactory) error {
 		config, err := tx.DeployConfigs().DeployConfig(ctx, projectId)
 		if err != nil {
 			return err
@@ -79,8 +79,7 @@ func (c *DeployConfigs) Get(ctx context.Context, projectId string) (*models.Depl
 		slog.String("projectId", projectId),
 	)
 	log.Info("getting deploy config")
-
-	config, err := c.storage.DeployConfigs().DeployConfig(ctx, projectId)
+	config, err := c.dc.DeployConfig(ctx, projectId)
 	if err != nil {
 		log.Error("failed to get deploy config", sl.Err(err))
 		return nil, err
@@ -96,7 +95,7 @@ func (c *DeployConfigs) Update(ctx context.Context, args *models.UpdateDeployCon
 	)
 	log.Info("updating deploy config")
 
-	err := c.storage.DeployConfigs().UpdateDeployConfig(ctx, args)
+	err := c.dc.UpdateDeployConfig(ctx, args)
 	if err != nil {
 		log.Error("failed to update deploy config", sl.Err(err))
 		return err

@@ -8,6 +8,10 @@ import (
 )
 
 type Storage interface {
+	Repos() RepoFactory
+}
+
+type RepoFactory interface {
 	ProjectVars() ProjectVarRepository
 	EnvVars() EnvVarRepository
 	ResolvedVars() ResolvedVarsRepository
@@ -32,13 +36,18 @@ type ResolvedVarsRepository interface {
 }
 
 type Vars struct {
-	log     *slog.Logger
-	storage Storage
+	log *slog.Logger
+	pv  ProjectVarRepository
+	ev  EnvVarRepository
+	rv  ResolvedVarsRepository
 }
 
 func New(log *slog.Logger, storage Storage) *Vars {
+	repos := storage.Repos()
 	return &Vars{
-		log:     log,
-		storage: storage,
+		log: log,
+		pv:  repos.ProjectVars(),
+		ev:  repos.EnvVars(),
+		rv:  repos.ResolvedVars(),
 	}
 }

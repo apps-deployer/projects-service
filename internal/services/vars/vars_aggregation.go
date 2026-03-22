@@ -17,7 +17,7 @@ func (v *Vars) ResolveVars(ctx context.Context, envId string) ([]*models.Resolve
 	)
 	log.Info("listing all vars")
 
-	res, err := v.storage.ResolvedVars().ResolvedVars(ctx, envId)
+	res, err := v.rv.ResolvedVars(ctx, envId)
 	if err != nil {
 		log.Error("failed to list all vars", sl.Err(err))
 		return nil, err

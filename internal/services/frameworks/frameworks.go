@@ -9,6 +9,10 @@ import (
 )
 
 type Storage interface {
+	Repos() RepoFactory
+}
+
+type RepoFactory interface {
 	Frameworks() FrameworkRepository
 }
 
@@ -21,14 +25,14 @@ type FrameworkRepository interface {
 }
 
 type Frameworks struct {
-	log     *slog.Logger
-	storage Storage
+	log        *slog.Logger
+	frameworks FrameworkRepository
 }
 
 func New(log *slog.Logger, storage Storage) *Frameworks {
 	return &Frameworks{
-		log:     log,
-		storage: storage,
+		log:        log,
+		frameworks: storage.Repos().Frameworks(),
 	}
 }
 
@@ -39,7 +43,7 @@ func (f *Frameworks) Get(ctx context.Context, id string) (*models.Framework, err
 		slog.String("id", id),
 	)
 	log.Info("getting framework")
-	framework, err := f.storage.Frameworks().Framework(ctx, id)
+	framework, err := f.frameworks.Framework(ctx, id)
 	if err != nil {
 		log.Error("failed to get framework", sl.Err(err))
 		return nil, err
@@ -53,7 +57,7 @@ func (f *Frameworks) List(ctx context.Context, args *models.ListFrameworksParams
 		slog.String("op", op),
 	)
 	log.Info("listing frameworks")
-	frameworks, err := f.storage.Frameworks().ListFrameworks(ctx, args)
+	frameworks, err := f.frameworks.ListFrameworks(ctx, args)
 	if err != nil {
 		log.Error("failed to list frameworks", sl.Err(err))
 		return nil, err
@@ -69,7 +73,7 @@ func (f *Frameworks) Create(ctx context.Context, args *models.CreateFrameworkPar
 		slog.String("name", args.Name),
 	)
 	log.Info("creating framework")
-	res, err := f.storage.Frameworks().SaveFramework(ctx, args)
+	res, err := f.frameworks.SaveFramework(ctx, args)
 	if err != nil {
 		log.Error("failed to create framework", sl.Err(err))
 		return nil, err
@@ -85,7 +89,7 @@ func (f *Frameworks) Update(ctx context.Context, args *models.UpdateFrameworkPar
 		slog.String("id", args.Id),
 	)
 	log.Info("updating framework")
-	err := f.storage.Frameworks().UpdateFramework(ctx, args)
+	err := f.frameworks.UpdateFramework(ctx, args)
 	if err != nil {
 		log.Error("failed to update framework", sl.Err(err))
 		return err
@@ -101,7 +105,7 @@ func (f *Frameworks) Delete(ctx context.Context, id string) error {
 		slog.String("id", id),
 	)
 	log.Info("deleting framework")
-	err := f.storage.Frameworks().DeleteFramework(ctx, id)
+	err := f.frameworks.DeleteFramework(ctx, id)
 	if err != nil {
 		log.Error("failed to delete framework", sl.Err(err))
 		return err

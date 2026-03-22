@@ -16,7 +16,7 @@ func (v *Vars) ListProjectVars(ctx context.Context, args *models.ListProjectVars
 		slog.String("projectId", args.ProjectId),
 	)
 	log.Info("listing project vars")
-	res, err := v.storage.ProjectVars().ListProjectVars(ctx, args)
+	res, err := v.pv.ListProjectVars(ctx, args)
 	if err != nil {
 		log.Error("failed to list project vars", sl.Err(err))
 		return nil, err
@@ -33,7 +33,7 @@ func (v *Vars) CreateProjectVar(ctx context.Context, args *models.CreateProjectV
 		slog.String("key", args.Key),
 	)
 	log.Info("creating project var")
-	res, err := v.storage.ProjectVars().SaveProjectVar(ctx, args)
+	res, err := v.pv.SaveProjectVar(ctx, args)
 	if err != nil {
 		log.Error("failed to create project var", sl.Err(err))
 		return nil, err
@@ -49,7 +49,7 @@ func (v *Vars) UpdateProjectVar(ctx context.Context, args *models.UpdateVarParam
 		slog.String("id", args.Id),
 	)
 	log.Info("updating project var")
-	err := v.storage.ProjectVars().UpdateProjectVar(ctx, args)
+	err := v.pv.UpdateProjectVar(ctx, args)
 	if err != nil {
 		log.Error("failed to update project var", sl.Err(err))
 		return err
@@ -65,7 +65,7 @@ func (v *Vars) DeleteProjectVar(ctx context.Context, id string) error {
 		slog.String("id", id),
 	)
 	log.Info("deleting project var")
-	err := v.storage.ProjectVars().DeleteProjectVar(ctx, id)
+	err := v.pv.DeleteProjectVar(ctx, id)
 	if err != nil {
 		log.Error("failed to delete project var", sl.Err(err))
 		return err
