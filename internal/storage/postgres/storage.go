@@ -31,36 +31,31 @@ func (s *Storage) Close() {
 	s.pool.Close()
 }
 
-func (s *Storage) Repositories() *RepoFactory {
+func (s *Storage) Repos() *RepoFactory {
 	return newRepoFactory(s.pool)
 }
 
-func (s *Storage) BeginTx(ctx context.Context) (pgx.Tx, error) {
-	return s.pool.BeginTx(ctx, pgx.TxOptions{})
-}
-
-func WithinTx[T any](
+func (s *Storage) WithinTx(
 	ctx context.Context,
-	s *Storage,
-	fn func(*RepoFactory) (*T, error),
-) (*T, error) {
+	fn func(*RepoFactory) error,
+) error {
 	const op = "storage.postgres.Storage.WithinTx"
-	tx, err := s.BeginTx(ctx)
+	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return fmt.Errorf("%s: %w", op, err)
 	}
 	defer func() {
 		_ = tx.Rollback(ctx)
 	}()
 
 	repos := newRepoFactory(tx)
-	res, err := fn(repos)
+	err = fn(repos)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return fmt.Errorf("%s: %w", op, err)
 	}
 	err = tx.Commit(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
+		return fmt.Errorf("%s: %w", op, err)
 	}
-	return res, nil
+	return nil
 }
