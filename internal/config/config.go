@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"time"
 
@@ -16,11 +17,24 @@ type Config struct {
 }
 
 type DbConfig struct {
-	Host string `yaml:"host" env-required:"true"`
-	Port int    `yaml:"port" env-default:"5432"`
-	User string `yaml:"user" env-required:"true"`
-	Pass string `yaml:"pass" env:"DB_PASSWORD" env-required:"true"`
-	Name string `yaml:"name" env-required:"true"`
+	Driver string `yaml:"driver" env-default:"postgres"`
+	Host   string `yaml:"host" env-required:"true"`
+	Port   int    `yaml:"port" env-default:"5432"`
+	User   string `yaml:"user" env-required:"true"`
+	Pass   string `yaml:"pass" env:"DB_PASSWORD" env-required:"true"`
+	Name   string `yaml:"name" env-required:"true"`
+}
+
+func (c DbConfig) Url() string {
+	return fmt.Sprintf(
+		"%s://%s:%s@%s:%d/%s",
+		c.Driver,
+		c.User,
+		c.Pass,
+		c.Host,
+		c.Port,
+		c.Name,
+	)
 }
 
 type GrpcConfig struct {

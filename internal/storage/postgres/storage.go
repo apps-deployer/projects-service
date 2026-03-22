@@ -28,7 +28,7 @@ func New(dbUrl string) (*Storage, error) {
 	return &Storage{pool: pool}, nil
 }
 
-func (s *Storage) Close() {
+func (s *Storage) Stop() {
 	s.pool.Close()
 }
 

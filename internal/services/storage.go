@@ -12,6 +12,7 @@ type Storage interface {
 		ctx context.Context,
 		fn func(RepoFactory) error,
 	) error
+	Stop()
 }
 
 type RepoFactory interface {
