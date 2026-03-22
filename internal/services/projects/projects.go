@@ -14,8 +14,8 @@ type Storage interface {
 
 	WithinTx(
 		ctx context.Context,
-		fn func(TxStorage) (*models.SaveProjectResponse, error),
-	) (*models.SaveProjectResponse, error)
+		fn func(TxStorage) error,
+	) error
 }
 
 type TxStorage interface {
@@ -97,10 +97,11 @@ func (p *Projects) Create(ctx context.Context, args *models.CreateProjectParams)
 		RepoUrl: args.RepoUrl,
 		OwnerId: args.OwnerId,
 	}
-	res, err := p.storage.WithinTx(ctx, func(tx TxStorage) (*models.SaveProjectResponse, error) {
+	var response *models.SaveProjectResponse
+	err := p.storage.WithinTx(ctx, func(tx TxStorage) error {
 		res, err := tx.Projects().SaveProject(ctx, project)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		_, err = tx.DeployConfigs().SaveDeployConfig(
 			ctx, &models.SaveDeployConfigParams{
@@ -109,15 +110,16 @@ func (p *Projects) Create(ctx context.Context, args *models.CreateProjectParams)
 			},
 		)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		return res, nil
+		response = res
+		return nil
 	})
 	if err != nil {
 		log.Error("failed to create project", sl.Err(err))
 		return nil, err
 	}
-	return models.NewProjectFromSaveResponse(project, res), nil
+	return models.NewProjectFromSaveResponse(project, response), nil
 }
 
 func (p *Projects) Update(ctx context.Context, args *models.UpdateProjectParams) error {

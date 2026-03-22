@@ -14,8 +14,8 @@ type Storage interface {
 
 	WithinTx(
 		ctx context.Context,
-		fn func(TxStorage) (*models.ResolvedDeployConfig, error),
-	) (*models.ResolvedDeployConfig, error)
+		fn func(TxStorage) error,
+	) error
 }
 
 type TxStorage interface {
@@ -52,16 +52,18 @@ func (c *DeployConfigs) Resolve(ctx context.Context, projectId string) (*models.
 		slog.String("projectId", projectId),
 	)
 	log.Info("resolving deploy config")
-	res, err := c.storage.WithinTx(ctx, func(tx TxStorage) (*models.ResolvedDeployConfig, error) {
+	var res *models.ResolvedDeployConfig
+	err := c.storage.WithinTx(ctx, func(tx TxStorage) error {
 		config, err := tx.DeployConfigs().DeployConfig(ctx, projectId)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		framework, err := tx.Frameworks().Framework(ctx, config.FrameworkId)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		return models.NewResolvedDeployConfig(config, framework), nil
+		res = models.NewResolvedDeployConfig(config, framework)
+		return nil
 	})
 	if err != nil {
 		log.Error("failed to resolve deploy config", sl.Err(err))

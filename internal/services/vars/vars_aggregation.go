@@ -8,7 +8,7 @@ import (
 	"github.com/apps-deployer/projects-service/internal/lib/logger/sl"
 )
 
-func (v *Vars) ResolveVars(ctx context.Context, envId string) ([]*models.Var, error) {
+func (v *Vars) ResolveVars(ctx context.Context, envId string) ([]*models.ResolvedVar, error) {
 	// TODO: Auth
 	op := "Vars.ListAllVars"
 	log := v.log.With(

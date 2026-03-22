@@ -28,7 +28,7 @@ type EnvVarRepository interface {
 }
 
 type ResolvedVarsRepository interface {
-	ResolvedVars(ctx context.Context, envId string) ([]*models.Var, error)
+	ResolvedVars(ctx context.Context, envId string) ([]*models.ResolvedVar, error)
 }
 
 type Vars struct {
