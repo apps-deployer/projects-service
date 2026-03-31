@@ -10,10 +10,11 @@ import (
 )
 
 type Config struct {
-	Env  string     `yaml:"env" env-default:"local"`
-	Db   DbConfig   `yaml:"db"`
-	Grpc GrpcConfig `yaml:"grpc"`
-	Auth AuthConfig `yaml:"auth"`
+	Env    string       `yaml:"env" env-default:"local"`
+	Db     DbConfig     `yaml:"db"`
+	Grpc   GrpcConfig   `yaml:"grpc"`
+	Auth   AuthConfig   `yaml:"auth"`
+	Crypto CryptoConfig `yaml:"crypto"`
 }
 
 type DbConfig struct {
@@ -44,6 +45,10 @@ type GrpcConfig struct {
 
 type AuthConfig struct {
 	JwtSecret string `yaml:"jwt_secret" env:"JWT_SECRET" env-required:"true"`
+}
+
+type CryptoConfig struct {
+	EncryptionKey string `yaml:"encryption_key" env:"ENCRYPTION_KEY" env-required:"true"`
 }
 
 func MustLoad() *Config {
