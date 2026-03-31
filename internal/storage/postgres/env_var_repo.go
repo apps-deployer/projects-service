@@ -34,10 +34,10 @@ func (r *Repo) ListEnvVars(ctx context.Context, args *models.ListEnvVarsParams) 
 func (r *Repo) SaveEnvVar(ctx context.Context, args *models.CreateEnvVarParams) (*models.SaveVarResponse, error) {
 	query := `
 		INSERT INTO projects.env_vars (env_id, key, value)
-		VALUES ($1, $2, $3)
+		VALUES ($1, $2, pgp_sym_encrypt($3::text, $4))
 		RETURNING id, created_at, updated_at
 	`
-	row := r.executor.QueryRow(ctx, query, args.EnvId, args.Key, []byte(args.Value))
+	row := r.executor.QueryRow(ctx, query, args.EnvId, args.Key, args.Value, r.encryptionKey)
 	var res models.SaveVarResponse
 	err := row.Scan(&res.Id, &res.CreatedAt, &res.UpdatedAt)
 	if err != nil {
@@ -49,14 +49,10 @@ func (r *Repo) SaveEnvVar(ctx context.Context, args *models.CreateEnvVarParams) 
 func (r *Repo) UpdateEnvVar(ctx context.Context, args *models.UpdateVarParams) error {
 	query := `
 		UPDATE projects.env_vars
-		SET value = COALESCE($2, value)
+		SET value = CASE WHEN $2::text IS NOT NULL THEN pgp_sym_encrypt($2::text, $3) ELSE value END
 		WHERE id = $1
 	`
-	var value []byte
-	if args.Value != nil {
-		value = []byte(*args.Value)
-	}
-	_, err := r.executor.Exec(ctx, query, args.Id, value)
+	_, err := r.executor.Exec(ctx, query, args.Id, args.Value, r.encryptionKey)
 	return mapError(err)
 }
 
