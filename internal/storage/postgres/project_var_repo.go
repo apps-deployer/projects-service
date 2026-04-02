@@ -34,10 +34,10 @@ func (r *Repo) ListProjectVars(ctx context.Context, args *models.ListProjectVars
 func (r *Repo) SaveProjectVar(ctx context.Context, args *models.CreateProjectVarParams) (*models.SaveVarResponse, error) {
 	query := `
 		INSERT INTO projects.project_vars (project_id, key, value)
-		VALUES ($1, $2, $3)
+		VALUES ($1, $2, pgp_sym_encrypt($3::text, $4))
 		RETURNING id, created_at, updated_at
 	`
-	row := r.executor.QueryRow(ctx, query, args.ProjectId, args.Key, []byte(args.Value))
+	row := r.executor.QueryRow(ctx, query, args.ProjectId, args.Key, args.Value, r.encryptionKey)
 	var res models.SaveVarResponse
 	err := row.Scan(&res.Id, &res.CreatedAt, &res.UpdatedAt)
 	if err != nil {
@@ -49,14 +49,10 @@ func (r *Repo) SaveProjectVar(ctx context.Context, args *models.CreateProjectVar
 func (r *Repo) UpdateProjectVar(ctx context.Context, args *models.UpdateVarParams) error {
 	query := `
 		UPDATE projects.project_vars
-		SET value = COALESCE($2, value)
+		SET value = CASE WHEN $2::text IS NOT NULL THEN pgp_sym_encrypt($2::text, $3) ELSE value END
 		WHERE id = $1
 	`
-	var value []byte
-	if args.Value != nil {
-		value = []byte(*args.Value)
-	}
-	_, err := r.executor.Exec(ctx, query, args.Id, value)
+	_, err := r.executor.Exec(ctx, query, args.Id, args.Value, r.encryptionKey)
 	return mapError(err)
 }
 

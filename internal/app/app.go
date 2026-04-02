@@ -22,8 +22,9 @@ func New(
 	log *slog.Logger,
 	grpcPort int,
 	dbUrl string,
+	encryptionKey string,
 ) *App {
-	storage, err := postgres.New(dbUrl)
+	storage, err := postgres.New(dbUrl, encryptionKey)
 	if err != nil {
 		panic(err)
 	}
