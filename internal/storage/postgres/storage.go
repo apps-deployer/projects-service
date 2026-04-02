@@ -11,10 +11,11 @@ import (
 )
 
 type Storage struct {
-	pool *pgxpool.Pool
+	pool          *pgxpool.Pool
+	encryptionKey string
 }
 
-func New(dbUrl string) (*Storage, error) {
+func New(dbUrl string, encryptionKey string) (*Storage, error) {
 	const op = "storage.postgres.New"
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -25,7 +26,7 @@ func New(dbUrl string) (*Storage, error) {
 	if err := pool.Ping(ctx); err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
-	return &Storage{pool: pool}, nil
+	return &Storage{pool: pool, encryptionKey: encryptionKey}, nil
 }
 
 func (s *Storage) Stop() {
@@ -33,7 +34,7 @@ func (s *Storage) Stop() {
 }
 
 func (s *Storage) Repos() services.RepoFactory {
-	return newRepoFactory(s.pool)
+	return newRepoFactory(s.pool, s.encryptionKey)
 }
 
 func (s *Storage) WithinTx(
@@ -49,7 +50,7 @@ func (s *Storage) WithinTx(
 		_ = tx.Rollback(ctx)
 	}()
 
-	repos := newRepoFactory(tx)
+	repos := newRepoFactory(tx, s.encryptionKey)
 	err = fn(repos)
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)

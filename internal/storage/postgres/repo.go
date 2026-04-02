@@ -9,7 +9,8 @@ import (
 )
 
 type Repo struct {
-	executor QueryExecutor
+	executor      QueryExecutor
+	encryptionKey string
 }
 
 type QueryExecutor interface {
@@ -22,8 +23,8 @@ type RepoFactory struct {
 	repo *Repo
 }
 
-func newRepoFactory(executor QueryExecutor) *RepoFactory {
-	repo := &Repo{executor: executor}
+func newRepoFactory(executor QueryExecutor, encryptionKey string) *RepoFactory {
+	repo := &Repo{executor: executor, encryptionKey: encryptionKey}
 	return &RepoFactory{
 		repo: repo,
 	}

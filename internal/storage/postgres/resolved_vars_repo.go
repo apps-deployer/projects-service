@@ -9,12 +9,12 @@ import (
 func (r *Repo) ResolvedVars(ctx context.Context, envId string) ([]*models.ResolvedVar, error) {
 	query := `
 		WITH env_vars AS (
-			SELECT key, value
+			SELECT key, pgp_sym_decrypt(value, $2)::text AS value
 			FROM projects.env_vars
 			WHERE env_id = $1
 		),
 		project_vars AS (
-			SELECT pv.key, pv.value
+			SELECT pv.key, pgp_sym_decrypt(pv.value, $2)::text AS value
 			FROM projects.project_vars pv
 			JOIN projects.envs e ON pv.project_id = e.project_id
 			WHERE e.id = $1
@@ -27,7 +27,7 @@ func (r *Repo) ResolvedVars(ctx context.Context, envId string) ([]*models.Resolv
 		)
 		SELECT key, value FROM combined
 	`
-	rows, err := r.executor.Query(ctx, query, envId)
+	rows, err := r.executor.Query(ctx, query, envId, r.encryptionKey)
 	if err != nil {
 		return nil, mapError(err)
 	}
@@ -35,14 +35,14 @@ func (r *Repo) ResolvedVars(ctx context.Context, envId string) ([]*models.Resolv
 	var vars []*models.ResolvedVar
 	for rows.Next() {
 		var key string
-		var value []byte
+		var value string
 		err := rows.Scan(&key, &value)
 		if err != nil {
 			return nil, err
 		}
 		vars = append(vars, &models.ResolvedVar{
 			Key:   key,
-			Value: string(value),
+			Value: value,
 		})
 	}
 	return vars, rows.Err()

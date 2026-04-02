@@ -19,7 +19,7 @@ const (
 func main() {
 	cfg := config.MustLoad()
 	log := setupLogger(cfg.Env)
-	application := app.New(log, cfg.Grpc.Port, cfg.Db.Url())
+	application := app.New(log, cfg.Grpc.Port, cfg.Db.Url(), cfg.Crypto.EncryptionKey)
 	go func() {
 		application.GrpcServer.MustRun()
 	}()
