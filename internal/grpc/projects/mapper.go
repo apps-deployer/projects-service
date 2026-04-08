@@ -29,9 +29,8 @@ func projectsToProto(projects []*models.Project) *projectsv1.ListProjectsRespons
 
 func protoToListProjectsParams(req *projectsv1.ListProjectsRequest) *models.ListProjectsParams {
 	return &models.ListProjectsParams{
-		OwnerId: req.GetOwnerId(),
-		Limit:   req.GetLimit(),
-		Offset:  req.GetOffset(),
+		Limit:  req.GetLimit(),
+		Offset: req.GetOffset(),
 	}
 }
 
@@ -39,7 +38,6 @@ func protoToCreateProjectsParams(req *projectsv1.CreateProjectRequest) *models.C
 	return &models.CreateProjectParams{
 		Name:        req.GetName(),
 		RepoUrl:     req.GetRepoUrl(),
-		OwnerId:     req.GetOwnerId(),
 		FrameworkId: req.GetDeployConfigTemplateId(),
 	}
 }
@@ -53,10 +51,6 @@ func protoToUpdateProjectParams(req *projectsv1.UpdateProjectRequest) *models.Up
 	if req.HasRepoUrl() {
 		repoUrl := req.GetRepoUrl()
 		project.RepoUrl = &repoUrl
-	}
-	if req.HasOwnerId() {
-		ownerId := req.GetOwnerId()
-		project.OwnerId = &ownerId
 	}
 	return project
 }
