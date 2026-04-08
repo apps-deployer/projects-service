@@ -5,6 +5,7 @@ import (
 
 	"github.com/apps-deployer/projects-service/internal/auth"
 	"github.com/apps-deployer/projects-service/internal/domain/models"
+	grpcutil "github.com/apps-deployer/projects-service/internal/grpc"
 	projectsv1 "github.com/apps-deployer/protos/gen/go/projects/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -38,7 +39,7 @@ func (s *projectsServer) GetProject(
 	}
 	project, err := s.projects.Get(ctx, req.GetId())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get project: %v", err)
+		return nil, grpcutil.MapError(err, "get project")
 	}
 	if project == nil {
 		return nil, status.Error(codes.NotFound, "project not found")
@@ -58,7 +59,7 @@ func (s *projectsServer) ListProjects(
 	params.OwnerId = ownerID
 	projects, err := s.projects.List(ctx, params)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to list projects: %v", err)
+		return nil, grpcutil.MapError(err, "list projects")
 	}
 	return projectsToProto(projects), nil
 }
@@ -84,7 +85,7 @@ func (s *projectsServer) CreateProject(
 	params.OwnerId = ownerID
 	project, err := s.projects.Create(ctx, params)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create project: %v", err)
+		return nil, grpcutil.MapError(err, "create project")
 	}
 	return projectToProto(project), nil
 }
@@ -97,7 +98,7 @@ func (s *projectsServer) UpdateProject(
 		return nil, status.Error(codes.InvalidArgument, "project ID is required")
 	}
 	if err := s.projects.Update(ctx, protoToUpdateProjectParams(req)); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to update project: %v", err)
+		return nil, grpcutil.MapError(err, "update project")
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -110,7 +111,7 @@ func (s *projectsServer) DeleteProject(
 		return nil, status.Error(codes.InvalidArgument, "project ID is required")
 	}
 	if err := s.projects.Delete(ctx, req.GetId()); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to delete project: %v", err)
+		return nil, grpcutil.MapError(err, "delete project")
 	}
 	return &emptypb.Empty{}, nil
 }

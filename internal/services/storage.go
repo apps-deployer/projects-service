@@ -30,6 +30,7 @@ type DeployConfigRepository interface {
 	UpdateDeployConfig(ctx context.Context, args *models.UpdateDeployConfigParams) error
 	SaveDeployConfig(ctx context.Context, args *models.SaveDeployConfigParams) (*models.SaveDeployConfigResponse, error)
 	DeleteDeployConfig(ctx context.Context, projectId string) error
+	ProjectOwnerByDeployConfigID(ctx context.Context, configID string) (string, error)
 }
 
 type FrameworkRepository interface {
@@ -62,6 +63,7 @@ type ProjectVarRepository interface {
 	SaveProjectVar(ctx context.Context, args *models.CreateProjectVarParams) (*models.SaveVarResponse, error)
 	UpdateProjectVar(ctx context.Context, args *models.UpdateVarParams) error
 	DeleteProjectVar(ctx context.Context, id string) error
+	ProjectOwnerByProjectVarID(ctx context.Context, varID string) (string, error)
 }
 
 type EnvVarRepository interface {
@@ -69,6 +71,7 @@ type EnvVarRepository interface {
 	SaveEnvVar(ctx context.Context, args *models.CreateEnvVarParams) (*models.SaveVarResponse, error)
 	UpdateEnvVar(ctx context.Context, args *models.UpdateVarParams) error
 	DeleteEnvVar(ctx context.Context, id string) error
+	ProjectOwnerByEnvVarID(ctx context.Context, varID string) (string, error)
 }
 
 type ResolvedVarsRepository interface {

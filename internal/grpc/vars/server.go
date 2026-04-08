@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/apps-deployer/projects-service/internal/domain/models"
+	grpcutil "github.com/apps-deployer/projects-service/internal/grpc"
 	projectsv1 "github.com/apps-deployer/protos/gen/go/projects/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -61,7 +62,7 @@ func (s *varsServer) ResolveVars(
 	}
 	vars, err := s.varsAggregator.ResolveVars(ctx, req.GetEnvId())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to list vars: %v", err)
+		return nil, grpcutil.MapError(err, "resolve vars")
 	}
 	return resolvedVarsToProto(vars), nil
 }
@@ -75,7 +76,7 @@ func (s *varsServer) ListProjectVars(
 	}
 	vars, err := s.projectVars.ListProjectVars(ctx, protoToListProjectVarsParams(req))
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to list project vars: %v", err)
+		return nil, grpcutil.MapError(err, "list project vars")
 	}
 	return varsToProto(vars), nil
 }
@@ -95,7 +96,7 @@ func (s *varsServer) CreateProjectVar(
 	}
 	v, err := s.projectVars.CreateProjectVar(ctx, protoToCreateProjectVarParams(req))
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create env: %v", err)
+		return nil, grpcutil.MapError(err, "create project var")
 	}
 	return varToProto(v), nil
 }
@@ -112,7 +113,7 @@ func (s *varsServer) UpdateProjectVar(
 	}
 	err := s.projectVars.UpdateProjectVar(ctx, protoToUpdateVarParams(req))
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to update var: %v", err)
+		return nil, grpcutil.MapError(err, "update project var")
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -125,7 +126,7 @@ func (s *varsServer) DeleteProjectVar(
 		return nil, status.Error(codes.InvalidArgument, "var ID is required")
 	}
 	if err := s.projectVars.DeleteProjectVar(ctx, req.GetId()); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to delete var: %v", err)
+		return nil, grpcutil.MapError(err, "delete project var")
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -139,7 +140,7 @@ func (s *varsServer) ListEnvVars(
 	}
 	vars, err := s.envVars.ListEnvVars(ctx, protoToListEnvVarsParams(req))
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to list env vars: %v", err)
+		return nil, grpcutil.MapError(err, "list env vars")
 	}
 	return varsToProto(vars), nil
 }
@@ -159,7 +160,7 @@ func (s *varsServer) CreateEnvVar(
 	}
 	v, err := s.envVars.CreateEnvVar(ctx, protoToCreateEnvVarParams(req))
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create env: %v", err)
+		return nil, grpcutil.MapError(err, "create env var")
 	}
 	return varToProto(v), nil
 }
@@ -176,7 +177,7 @@ func (s *varsServer) UpdateEnvVar(
 	}
 	err := s.envVars.UpdateEnvVar(ctx, protoToUpdateVarParams(req))
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to update var: %v", err)
+		return nil, grpcutil.MapError(err, "update env var")
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -189,7 +190,7 @@ func (s *varsServer) DeleteEnvVar(
 		return nil, status.Error(codes.InvalidArgument, "var ID is required")
 	}
 	if err := s.envVars.DeleteEnvVar(ctx, req.GetId()); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to delete var: %v", err)
+		return nil, grpcutil.MapError(err, "delete env var")
 	}
 	return &emptypb.Empty{}, nil
 }
