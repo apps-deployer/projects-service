@@ -3,7 +3,7 @@ module github.com/apps-deployer/projects-service
 go 1.26.1
 
 require (
-	github.com/apps-deployer/protos v0.1.1
+	github.com/apps-deployer/protos v0.1.2
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3
 	github.com/ilyakaznacheev/cleanenv v1.5.0
