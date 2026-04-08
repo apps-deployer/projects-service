@@ -9,17 +9,21 @@ import (
 )
 
 func (v *Vars) ResolveVars(ctx context.Context, envId string) ([]*models.ResolvedVar, error) {
-	// TODO: Auth
-	op := "Vars.ListAllVars"
+	op := "Vars.ResolveVars"
 	log := v.log.With(
 		slog.String("op", op),
 		slog.String("id", envId),
 	)
-	log.Info("listing all vars")
+	log.Info("resolving vars")
+
+	if err := v.checkEnvOwnership(ctx, envId); err != nil {
+		log.Warn("ownership check failed", sl.Err(err))
+		return nil, err
+	}
 
 	res, err := v.rv.ResolvedVars(ctx, envId)
 	if err != nil {
-		log.Error("failed to list all vars", sl.Err(err))
+		log.Error("failed to resolve vars", sl.Err(err))
 		return nil, err
 	}
 	return res, nil

@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/apps-deployer/projects-service/internal/auth"
 	"github.com/apps-deployer/projects-service/internal/domain/models"
 	"github.com/apps-deployer/projects-service/internal/lib/logger/sl"
 	"github.com/apps-deployer/projects-service/internal/services"
@@ -27,7 +28,6 @@ func New(
 }
 
 func (p *Projects) Get(ctx context.Context, id string) (*models.Project, error) {
-	// TODO: Auth
 	op := "Projects.Get"
 	log := p.log.With(
 		slog.String("op", op),
@@ -39,11 +39,14 @@ func (p *Projects) Get(ctx context.Context, id string) (*models.Project, error) 
 		log.Error("failed to get project", sl.Err(err))
 		return nil, err
 	}
+	if err := auth.CheckOwnership(ctx, res.OwnerId); err != nil {
+		log.Warn("ownership check failed", sl.Err(err))
+		return nil, err
+	}
 	return res, nil
 }
 
 func (p *Projects) List(ctx context.Context, args *models.ListProjectsParams) ([]*models.Project, error) {
-	// TODO: Auth
 	op := "Projects.List"
 	log := p.log.With(
 		slog.String("op", op),
@@ -59,7 +62,6 @@ func (p *Projects) List(ctx context.Context, args *models.ListProjectsParams) ([
 }
 
 func (p *Projects) Create(ctx context.Context, args *models.CreateProjectParams) (*models.Project, error) {
-	// TODO: Auth
 	op := "Projects.Create"
 	log := p.log.With(
 		slog.String("op", op),
@@ -98,14 +100,22 @@ func (p *Projects) Create(ctx context.Context, args *models.CreateProjectParams)
 }
 
 func (p *Projects) Update(ctx context.Context, args *models.UpdateProjectParams) error {
-	// TODO: Auth
 	op := "Projects.Update"
 	log := p.log.With(
 		slog.String("op", op),
 		slog.String("id", args.Id),
 	)
 	log.Info("updating project")
-	err := p.projects.UpdateProject(ctx, args)
+	project, err := p.projects.Project(ctx, args.Id)
+	if err != nil {
+		log.Error("failed to get project for ownership check", sl.Err(err))
+		return err
+	}
+	if err := auth.CheckOwnership(ctx, project.OwnerId); err != nil {
+		log.Warn("ownership check failed", sl.Err(err))
+		return err
+	}
+	err = p.projects.UpdateProject(ctx, args)
 	if err != nil {
 		log.Error("failed to update project", sl.Err(err))
 		return err
@@ -114,14 +124,22 @@ func (p *Projects) Update(ctx context.Context, args *models.UpdateProjectParams)
 }
 
 func (p *Projects) Delete(ctx context.Context, id string) error {
-	// TODO: Auth
 	op := "Projects.Delete"
 	log := p.log.With(
 		slog.String("op", op),
 		slog.String("id", id),
 	)
 	log.Info("deleting project")
-	err := p.projects.DeleteProject(ctx, id)
+	project, err := p.projects.Project(ctx, id)
+	if err != nil {
+		log.Error("failed to get project for ownership check", sl.Err(err))
+		return err
+	}
+	if err := auth.CheckOwnership(ctx, project.OwnerId); err != nil {
+		log.Warn("ownership check failed", sl.Err(err))
+		return err
+	}
+	err = p.projects.DeleteProject(ctx, id)
 	if err != nil {
 		log.Error("failed to delete project", sl.Err(err))
 		return err

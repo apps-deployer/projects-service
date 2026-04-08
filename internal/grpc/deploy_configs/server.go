@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/apps-deployer/projects-service/internal/domain/models"
+	grpcutil "github.com/apps-deployer/projects-service/internal/grpc"
 	projectsv1 "github.com/apps-deployer/protos/gen/go/projects/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -38,7 +39,7 @@ func (s *deployConfigsServer) ResolveDeployConfig(
 	}
 	config, err := s.deployConfigs.Resolve(ctx, req.GetProjectId())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to generate deploy config: %v", err)
+		return nil, grpcutil.MapError(err, "resolve deploy config")
 	}
 	if config == nil {
 		return nil, status.Error(codes.NotFound, "project not found")
@@ -55,7 +56,7 @@ func (s *deployConfigsServer) GetDeployConfig(
 	}
 	config, err := s.deployConfigs.Get(ctx, req.GetProjectId())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to generate deploy config: %v", err)
+		return nil, grpcutil.MapError(err, "get deploy config")
 	}
 	if config == nil {
 		return nil, status.Error(codes.NotFound, "project not found")
@@ -71,7 +72,7 @@ func (s *deployConfigsServer) UpdateDeployConfig(
 		return nil, status.Error(codes.InvalidArgument, "deploy config ID is required")
 	}
 	if err := s.deployConfigs.Update(ctx, protoToUpdateDeployConfigParams(req)); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to update deploy config: %v", err)
+		return nil, grpcutil.MapError(err, "update deploy config")
 	}
 	return &emptypb.Empty{}, nil
 }

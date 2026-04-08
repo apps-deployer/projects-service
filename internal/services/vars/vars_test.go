@@ -8,10 +8,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/apps-deployer/projects-service/internal/auth"
 	"github.com/apps-deployer/projects-service/internal/domain/models"
 	"github.com/apps-deployer/projects-service/internal/services"
 	"github.com/apps-deployer/projects-service/internal/services/vars"
 )
+
+const testUserID = "user-uuid"
+const testProjectID = "proj-uuid"
+const testEnvID = "env-uuid"
 
 // --- mock storage / repo factory ---
 
@@ -29,25 +34,72 @@ type mockRepoFactory struct {
 	pv services.ProjectVarRepository
 	ev services.EnvVarRepository
 	rv services.ResolvedVarsRepository
+	p  services.ProjectRepository
+	e  services.EnvRepository
 }
 
-func (m *mockRepoFactory) Projects() services.ProjectRepository               { return nil }
-func (m *mockRepoFactory) Frameworks() services.FrameworkRepository           { return nil }
-func (m *mockRepoFactory) DeployConfigs() services.DeployConfigRepository     { return nil }
-func (m *mockRepoFactory) Envs() services.EnvRepository                       { return nil }
-func (m *mockRepoFactory) ProjectVars() services.ProjectVarRepository         { return m.pv }
-func (m *mockRepoFactory) EnvVars() services.EnvVarRepository                 { return m.ev }
-func (m *mockRepoFactory) ResolvedVars() services.ResolvedVarsRepository      { return m.rv }
+func (m *mockRepoFactory) Projects() services.ProjectRepository           { return m.p }
+func (m *mockRepoFactory) Frameworks() services.FrameworkRepository       { return nil }
+func (m *mockRepoFactory) DeployConfigs() services.DeployConfigRepository { return nil }
+func (m *mockRepoFactory) Envs() services.EnvRepository                   { return m.e }
+func (m *mockRepoFactory) ProjectVars() services.ProjectVarRepository     { return m.pv }
+func (m *mockRepoFactory) EnvVars() services.EnvVarRepository             { return m.ev }
+func (m *mockRepoFactory) ResolvedVars() services.ResolvedVarsRepository  { return m.rv }
+
+// --- mock project repository ---
+
+type mockProjectRepo struct {
+	project *models.Project
+	err     error
+}
+
+func (m *mockProjectRepo) Project(_ context.Context, _ string) (*models.Project, error) {
+	return m.project, m.err
+}
+func (m *mockProjectRepo) ListProjects(_ context.Context, _ *models.ListProjectsParams) ([]*models.Project, error) {
+	return nil, nil
+}
+func (m *mockProjectRepo) SaveProject(_ context.Context, _ *models.SaveProjectParams) (*models.SaveProjectResponse, error) {
+	return nil, nil
+}
+func (m *mockProjectRepo) UpdateProject(_ context.Context, _ *models.UpdateProjectParams) error {
+	return nil
+}
+func (m *mockProjectRepo) DeleteProject(_ context.Context, _ string) error { return nil }
+
+// --- mock env repository ---
+
+type mockEnvRepo struct {
+	env *models.Env
+	err error
+}
+
+func (m *mockEnvRepo) Env(_ context.Context, _ string) (*models.Env, error) {
+	return m.env, m.err
+}
+func (m *mockEnvRepo) EnvByGit(_ context.Context, _ string, _ string) (*models.Env, error) {
+	return nil, nil
+}
+func (m *mockEnvRepo) ListEnvs(_ context.Context, _ *models.ListEnvsParams) ([]*models.Env, error) {
+	return nil, nil
+}
+func (m *mockEnvRepo) SaveEnv(_ context.Context, _ *models.CreateEnvParams) (*models.SaveEnvResponse, error) {
+	return nil, nil
+}
+func (m *mockEnvRepo) UpdateEnv(_ context.Context, _ *models.UpdateEnvParams) error { return nil }
+func (m *mockEnvRepo) DeleteEnv(_ context.Context, _ string) error                  { return nil }
 
 // --- mock project var repository ---
 
 type mockProjectVarRepo struct {
-	saveResp *models.SaveVarResponse
-	saveErr  error
-	listResp []*models.Var
-	listErr  error
-	updateErr error
-	deleteErr error
+	saveResp    *models.SaveVarResponse
+	saveErr     error
+	listResp    []*models.Var
+	listErr     error
+	updateErr   error
+	deleteErr   error
+	ownerID     string
+	ownerErr    error
 }
 
 func (m *mockProjectVarRepo) ListProjectVars(_ context.Context, _ *models.ListProjectVarsParams) ([]*models.Var, error) {
@@ -62,6 +114,9 @@ func (m *mockProjectVarRepo) UpdateProjectVar(_ context.Context, _ *models.Updat
 func (m *mockProjectVarRepo) DeleteProjectVar(_ context.Context, _ string) error {
 	return m.deleteErr
 }
+func (m *mockProjectVarRepo) ProjectOwnerByProjectVarID(_ context.Context, _ string) (string, error) {
+	return m.ownerID, m.ownerErr
+}
 
 // --- mock env var repository ---
 
@@ -72,6 +127,8 @@ type mockEnvVarRepo struct {
 	listErr   error
 	updateErr error
 	deleteErr error
+	ownerID   string
+	ownerErr  error
 }
 
 func (m *mockEnvVarRepo) ListEnvVars(_ context.Context, _ *models.ListEnvVarsParams) ([]*models.Var, error) {
@@ -85,6 +142,9 @@ func (m *mockEnvVarRepo) UpdateEnvVar(_ context.Context, _ *models.UpdateVarPara
 }
 func (m *mockEnvVarRepo) DeleteEnvVar(_ context.Context, _ string) error {
 	return m.deleteErr
+}
+func (m *mockEnvVarRepo) ProjectOwnerByEnvVarID(_ context.Context, _ string) (string, error) {
+	return m.ownerID, m.ownerErr
 }
 
 // --- mock resolved vars repository ---
@@ -104,9 +164,31 @@ func newTestLogger() *slog.Logger {
 	return slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelError}))
 }
 
-func newTestStorage(pv services.ProjectVarRepository, ev services.EnvVarRepository, rv services.ResolvedVarsRepository) services.Storage {
+func defaultProjectRepo() *mockProjectRepo {
+	return &mockProjectRepo{
+		project: &models.Project{Id: testProjectID, OwnerId: testUserID},
+	}
+}
+
+func defaultEnvRepo() *mockEnvRepo {
+	return &mockEnvRepo{
+		env: &models.Env{Id: testEnvID, ProjectId: testProjectID},
+	}
+}
+
+func authedCtx() context.Context {
+	return auth.WithUserID(context.Background(), testUserID)
+}
+
+func newTestStorage(
+	pv services.ProjectVarRepository,
+	ev services.EnvVarRepository,
+	rv services.ResolvedVarsRepository,
+	p services.ProjectRepository,
+	e services.EnvRepository,
+) services.Storage {
 	return &mockStorage{
-		factory: &mockRepoFactory{pv: pv, ev: ev, rv: rv},
+		factory: &mockRepoFactory{pv: pv, ev: ev, rv: rv, p: p, e: e},
 	}
 }
 
@@ -121,10 +203,10 @@ func TestCreateProjectVar_HappyPath(t *testing.T) {
 			UpdatedAt: now,
 		},
 	}
-	svc := vars.New(newTestLogger(), newTestStorage(pvRepo, nil, nil))
+	svc := vars.New(newTestLogger(), newTestStorage(pvRepo, nil, nil, defaultProjectRepo(), nil))
 
-	result, err := svc.CreateProjectVar(context.Background(), &models.CreateProjectVarParams{
-		ProjectId: "proj-uuid",
+	result, err := svc.CreateProjectVar(authedCtx(), &models.CreateProjectVarParams{
+		ProjectId: testProjectID,
 		Key:       "DATABASE_URL",
 		Value:     "postgres://localhost/mydb",
 	})
@@ -142,15 +224,32 @@ func TestCreateProjectVar_HappyPath(t *testing.T) {
 func TestCreateProjectVar_RepoError(t *testing.T) {
 	wantErr := errors.New("db error")
 	pvRepo := &mockProjectVarRepo{saveErr: wantErr}
-	svc := vars.New(newTestLogger(), newTestStorage(pvRepo, nil, nil))
+	svc := vars.New(newTestLogger(), newTestStorage(pvRepo, nil, nil, defaultProjectRepo(), nil))
 
-	_, err := svc.CreateProjectVar(context.Background(), &models.CreateProjectVarParams{
-		ProjectId: "proj-uuid",
+	_, err := svc.CreateProjectVar(authedCtx(), &models.CreateProjectVarParams{
+		ProjectId: testProjectID,
 		Key:       "KEY",
 		Value:     "value",
 	})
 	if !errors.Is(err, wantErr) {
 		t.Errorf("expected error %v, got %v", wantErr, err)
+	}
+}
+
+func TestCreateProjectVar_PermissionDenied(t *testing.T) {
+	pvRepo := &mockProjectVarRepo{}
+	otherOwnerRepo := &mockProjectRepo{
+		project: &models.Project{Id: testProjectID, OwnerId: "other-user"},
+	}
+	svc := vars.New(newTestLogger(), newTestStorage(pvRepo, nil, nil, otherOwnerRepo, nil))
+
+	_, err := svc.CreateProjectVar(authedCtx(), &models.CreateProjectVarParams{
+		ProjectId: testProjectID,
+		Key:       "KEY",
+		Value:     "value",
+	})
+	if !errors.Is(err, auth.ErrPermissionDenied) {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
 	}
 }
 
@@ -162,10 +261,10 @@ func TestListProjectVars_HappyPath(t *testing.T) {
 			{Id: "v2", Key: "K2", CreatedAt: now, UpdatedAt: now},
 		},
 	}
-	svc := vars.New(newTestLogger(), newTestStorage(pvRepo, nil, nil))
+	svc := vars.New(newTestLogger(), newTestStorage(pvRepo, nil, nil, defaultProjectRepo(), nil))
 
-	result, err := svc.ListProjectVars(context.Background(), &models.ListProjectVarsParams{
-		ProjectId: "proj-uuid",
+	result, err := svc.ListProjectVars(authedCtx(), &models.ListProjectVarsParams{
+		ProjectId: testProjectID,
 		Limit:     10,
 		Offset:    0,
 	})
@@ -186,10 +285,10 @@ func TestCreateEnvVar_HappyPath(t *testing.T) {
 			UpdatedAt: now,
 		},
 	}
-	svc := vars.New(newTestLogger(), newTestStorage(nil, evRepo, nil))
+	svc := vars.New(newTestLogger(), newTestStorage(nil, evRepo, nil, defaultProjectRepo(), defaultEnvRepo()))
 
-	result, err := svc.CreateEnvVar(context.Background(), &models.CreateEnvVarParams{
-		EnvId: "env-uuid",
+	result, err := svc.CreateEnvVar(authedCtx(), &models.CreateEnvVarParams{
+		EnvId: testEnvID,
 		Key:   "SECRET_KEY",
 		Value: "s3cr3t",
 	})
@@ -211,9 +310,9 @@ func TestResolveVars_HappyPath(t *testing.T) {
 			{Id: "", Key: "SECRET", Value: "topsecret"},
 		},
 	}
-	svc := vars.New(newTestLogger(), newTestStorage(nil, nil, rvRepo))
+	svc := vars.New(newTestLogger(), newTestStorage(nil, nil, rvRepo, defaultProjectRepo(), defaultEnvRepo()))
 
-	result, err := svc.ResolveVars(context.Background(), "env-uuid")
+	result, err := svc.ResolveVars(authedCtx(), testEnvID)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -226,11 +325,11 @@ func TestResolveVars_HappyPath(t *testing.T) {
 }
 
 func TestUpdateProjectVar_HappyPath(t *testing.T) {
-	pvRepo := &mockProjectVarRepo{}
-	svc := vars.New(newTestLogger(), newTestStorage(pvRepo, nil, nil))
+	pvRepo := &mockProjectVarRepo{ownerID: testUserID}
+	svc := vars.New(newTestLogger(), newTestStorage(pvRepo, nil, nil, defaultProjectRepo(), nil))
 
 	newVal := "newvalue"
-	err := svc.UpdateProjectVar(context.Background(), &models.UpdateVarParams{
+	err := svc.UpdateProjectVar(authedCtx(), &models.UpdateVarParams{
 		Id:    "var-uuid",
 		Value: &newVal,
 	})
@@ -240,11 +339,25 @@ func TestUpdateProjectVar_HappyPath(t *testing.T) {
 }
 
 func TestDeleteProjectVar_HappyPath(t *testing.T) {
-	pvRepo := &mockProjectVarRepo{}
-	svc := vars.New(newTestLogger(), newTestStorage(pvRepo, nil, nil))
+	pvRepo := &mockProjectVarRepo{ownerID: testUserID}
+	svc := vars.New(newTestLogger(), newTestStorage(pvRepo, nil, nil, defaultProjectRepo(), nil))
 
-	err := svc.DeleteProjectVar(context.Background(), "var-uuid")
+	err := svc.DeleteProjectVar(authedCtx(), "var-uuid")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestUpdateProjectVar_PermissionDenied(t *testing.T) {
+	pvRepo := &mockProjectVarRepo{ownerID: "other-user"}
+	svc := vars.New(newTestLogger(), newTestStorage(pvRepo, nil, nil, defaultProjectRepo(), nil))
+
+	newVal := "newvalue"
+	err := svc.UpdateProjectVar(authedCtx(), &models.UpdateVarParams{
+		Id:    "var-uuid",
+		Value: &newVal,
+	})
+	if !errors.Is(err, auth.ErrPermissionDenied) {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
 	}
 }

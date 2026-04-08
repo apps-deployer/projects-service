@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/apps-deployer/projects-service/internal/domain/models"
+	grpcutil "github.com/apps-deployer/projects-service/internal/grpc"
 	projectsv1 "github.com/apps-deployer/protos/gen/go/projects/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -41,7 +42,7 @@ func (s *envsServer) GetEnvByGit(
 	}
 	env, err := s.envs.GetByGit(ctx, protoToGetEnvByGitParams(req))
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get env: %v", err)
+		return nil, grpcutil.MapError(err, "get env by git")
 	}
 	if env == nil {
 		return nil, status.Error(codes.NotFound, "env not found")
@@ -58,7 +59,7 @@ func (s *envsServer) GetEnv(
 	}
 	env, err := s.envs.Get(ctx, req.GetId())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get env: %v", err)
+		return nil, grpcutil.MapError(err, "get env")
 	}
 	if env == nil {
 		return nil, status.Error(codes.NotFound, "env not found")
@@ -78,7 +79,7 @@ func (s *envsServer) ListEnvs(
 		protoToListEnvParams(req),
 	)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to list envs: %v", err)
+		return nil, grpcutil.MapError(err, "list envs")
 	}
 	return envsToProto(envs), nil
 }
@@ -101,7 +102,7 @@ func (s *envsServer) CreateEnv(
 	}
 	env, err := s.envs.Create(ctx, protoToCreateEnvParams(req))
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create env: %v", err)
+		return nil, grpcutil.MapError(err, "create env")
 	}
 	return envToProto(env), nil
 }
@@ -115,7 +116,7 @@ func (s *envsServer) UpdateEnv(
 	}
 
 	if err := s.envs.Update(ctx, protoToUpdateEnvParams(req)); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to update env: %v", err)
+		return nil, grpcutil.MapError(err, "update env")
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -128,7 +129,7 @@ func (s *envsServer) DeleteEnv(
 		return nil, status.Error(codes.InvalidArgument, "env ID is required")
 	}
 	if err := s.envs.Delete(ctx, req.GetId()); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to delete env: %v", err)
+		return nil, grpcutil.MapError(err, "delete env")
 	}
 	return &emptypb.Empty{}, nil
 }

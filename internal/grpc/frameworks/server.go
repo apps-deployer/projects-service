@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/apps-deployer/projects-service/internal/domain/models"
+	grpcutil "github.com/apps-deployer/projects-service/internal/grpc"
 	projectsv1 "github.com/apps-deployer/protos/gen/go/projects/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -41,7 +42,7 @@ func (s *frameworksServer) GetFramework(
 	}
 	framework, err := s.frameworks.Get(ctx, req.GetId())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get framework: %v", err)
+		return nil, grpcutil.MapError(err, "get framework")
 	}
 	if framework == nil {
 		return nil, status.Error(codes.NotFound, "framework not found")
@@ -58,7 +59,7 @@ func (s *frameworksServer) ListFrameworks(
 		protoToListFrameworksParams(req),
 	)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to list frameworks: %v", err)
+		return nil, grpcutil.MapError(err, "list frameworks")
 	}
 	return frameworksToProto(frameworks), nil
 }
@@ -78,7 +79,7 @@ func (s *frameworksServer) CreateFramework(
 	}
 	framework, err := s.frameworks.Create(ctx, protoToCreateFrameworkParams(req))
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create framework: %v", err)
+		return nil, grpcutil.MapError(err, "create framework")
 	}
 	return frameworkToProto(framework), nil
 }
@@ -92,7 +93,7 @@ func (s *frameworksServer) UpdateFramework(
 	}
 	args := protoToUpdateFrameworkParams(req)
 	if err := s.frameworks.Update(ctx, args); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to update framework: %v", err)
+		return nil, grpcutil.MapError(err, "update framework")
 	}
 	return &emptypb.Empty{}, nil
 }
@@ -105,7 +106,7 @@ func (s *frameworksServer) DeleteFramework(
 		return nil, status.Error(codes.InvalidArgument, "framework ID is required")
 	}
 	if err := s.frameworks.Delete(ctx, req.GetId()); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to delete framework: %v", err)
+		return nil, grpcutil.MapError(err, "delete framework")
 	}
 	return &emptypb.Empty{}, nil
 }
