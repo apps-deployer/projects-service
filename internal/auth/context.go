@@ -34,11 +34,20 @@ func MustUserID(ctx context.Context) (string, error) {
 	return id, nil
 }
 
+// IsServiceAccount returns true if the user ID belongs to a service account.
+func IsServiceAccount(userID string) bool {
+	return len(userID) > 8 && userID[:8] == "service:"
+}
+
 // CheckOwnership verifies that the authenticated user matches the resource owner.
+// Service accounts bypass ownership checks.
 func CheckOwnership(ctx context.Context, ownerID string) error {
 	userID, err := MustUserID(ctx)
 	if err != nil {
 		return err
+	}
+	if IsServiceAccount(userID) {
+		return nil
 	}
 	if userID != ownerID {
 		return ErrPermissionDenied
