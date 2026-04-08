@@ -61,3 +61,19 @@ func (r *Repo) DeleteEnvVar(ctx context.Context, id string) error {
 	_, err := r.executor.Exec(ctx, query, id)
 	return mapError(err)
 }
+
+func (r *Repo) ProjectOwnerByEnvVarID(ctx context.Context, varID string) (string, error) {
+	query := `
+		SELECT p.owner_id
+		FROM projects.env_vars ev
+		JOIN projects.envs e ON ev.env_id = e.id
+		JOIN projects.projects p ON e.project_id = p.id
+		WHERE ev.id = $1
+	`
+	var ownerID string
+	err := r.executor.QueryRow(ctx, query, varID).Scan(&ownerID)
+	if err != nil {
+		return "", mapError(err)
+	}
+	return ownerID, nil
+}

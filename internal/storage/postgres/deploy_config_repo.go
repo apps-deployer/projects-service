@@ -68,3 +68,18 @@ func (r *Repo) DeleteDeployConfig(ctx context.Context, projectId string) error {
 	_, err := r.executor.Exec(ctx, query, projectId)
 	return mapError(err)
 }
+
+func (r *Repo) ProjectOwnerByDeployConfigID(ctx context.Context, configID string) (string, error) {
+	query := `
+		SELECT p.owner_id
+		FROM projects.deploy_configs dc
+		JOIN projects.projects p ON dc.project_id = p.id
+		WHERE dc.id = $1
+	`
+	var ownerID string
+	err := r.executor.QueryRow(ctx, query, configID).Scan(&ownerID)
+	if err != nil {
+		return "", mapError(err)
+	}
+	return ownerID, nil
+}
