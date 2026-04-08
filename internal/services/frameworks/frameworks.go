@@ -51,7 +51,6 @@ func (f *Frameworks) List(ctx context.Context, args *models.ListFrameworksParams
 }
 
 func (f *Frameworks) Create(ctx context.Context, args *models.CreateFrameworkParams) (*models.Framework, error) {
-	// TODO: check admin
 	op := "Frameworks.Create"
 	log := f.log.With(
 		slog.String("op", op),
@@ -67,7 +66,6 @@ func (f *Frameworks) Create(ctx context.Context, args *models.CreateFrameworkPar
 }
 
 func (f *Frameworks) Update(ctx context.Context, args *models.UpdateFrameworkParams) error {
-	// TODO: check admin
 	op := "Frameworks.Update"
 	log := f.log.With(
 		slog.String("op", op),
@@ -83,7 +81,6 @@ func (f *Frameworks) Update(ctx context.Context, args *models.UpdateFrameworkPar
 }
 
 func (f *Frameworks) Delete(ctx context.Context, id string) error {
-	// TODO: check admin
 	op := "Frameworks.Delete"
 	log := f.log.With(
 		slog.String("op", op),

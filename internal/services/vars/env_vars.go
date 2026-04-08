@@ -4,18 +4,30 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/apps-deployer/projects-service/internal/auth"
 	"github.com/apps-deployer/projects-service/internal/domain/models"
 	"github.com/apps-deployer/projects-service/internal/lib/logger/sl"
 )
 
+func (v *Vars) checkEnvOwnership(ctx context.Context, envID string) error {
+	env, err := v.envs.Env(ctx, envID)
+	if err != nil {
+		return err
+	}
+	return v.checkProjectOwnership(ctx, env.ProjectId)
+}
+
 func (v *Vars) ListEnvVars(ctx context.Context, args *models.ListEnvVarsParams) ([]*models.Var, error) {
-	// TODO: Auth
 	op := "Vars.ListEnvVars"
 	log := v.log.With(
 		slog.String("op", op),
 		slog.String("envId", args.EnvId),
 	)
 	log.Info("listing env vars")
+	if err := v.checkEnvOwnership(ctx, args.EnvId); err != nil {
+		log.Warn("ownership check failed", sl.Err(err))
+		return nil, err
+	}
 	res, err := v.ev.ListEnvVars(ctx, args)
 	if err != nil {
 		log.Error("failed to list env vars", sl.Err(err))
@@ -25,7 +37,6 @@ func (v *Vars) ListEnvVars(ctx context.Context, args *models.ListEnvVarsParams) 
 }
 
 func (v *Vars) CreateEnvVar(ctx context.Context, args *models.CreateEnvVarParams) (*models.Var, error) {
-	// TODO: Auth
 	op := "Vars.CreateEnvVar"
 	log := v.log.With(
 		slog.String("op", op),
@@ -33,6 +44,10 @@ func (v *Vars) CreateEnvVar(ctx context.Context, args *models.CreateEnvVarParams
 		slog.String("key", args.Key),
 	)
 	log.Info("creating env var")
+	if err := v.checkEnvOwnership(ctx, args.EnvId); err != nil {
+		log.Warn("ownership check failed", sl.Err(err))
+		return nil, err
+	}
 	res, err := v.ev.SaveEnvVar(ctx, args)
 	if err != nil {
 		log.Error("failed to create env var", sl.Err(err))
@@ -42,14 +57,22 @@ func (v *Vars) CreateEnvVar(ctx context.Context, args *models.CreateEnvVarParams
 }
 
 func (v *Vars) UpdateEnvVar(ctx context.Context, args *models.UpdateVarParams) error {
-	// TODO: Auth
 	op := "Vars.UpdateEnvVar"
 	log := v.log.With(
 		slog.String("op", op),
 		slog.String("id", args.Id),
 	)
 	log.Info("updating env var")
-	err := v.ev.UpdateEnvVar(ctx, args)
+	ownerID, err := v.ev.ProjectOwnerByEnvVarID(ctx, args.Id)
+	if err != nil {
+		log.Error("failed to get project owner for env var", sl.Err(err))
+		return err
+	}
+	if err := auth.CheckOwnership(ctx, ownerID); err != nil {
+		log.Warn("ownership check failed", sl.Err(err))
+		return err
+	}
+	err = v.ev.UpdateEnvVar(ctx, args)
 	if err != nil {
 		log.Error("failed to update env var", sl.Err(err))
 		return err
@@ -58,14 +81,22 @@ func (v *Vars) UpdateEnvVar(ctx context.Context, args *models.UpdateVarParams) e
 }
 
 func (v *Vars) DeleteEnvVar(ctx context.Context, id string) error {
-	// TODO: Auth
 	op := "Vars.DeleteEnvVar"
 	log := v.log.With(
 		slog.String("op", op),
 		slog.String("id", id),
 	)
 	log.Info("deleting env var")
-	err := v.ev.DeleteEnvVar(ctx, id)
+	ownerID, err := v.ev.ProjectOwnerByEnvVarID(ctx, id)
+	if err != nil {
+		log.Error("failed to get project owner for env var", sl.Err(err))
+		return err
+	}
+	if err := auth.CheckOwnership(ctx, ownerID); err != nil {
+		log.Warn("ownership check failed", sl.Err(err))
+		return err
+	}
+	err = v.ev.DeleteEnvVar(ctx, id)
 	if err != nil {
 		log.Error("failed to delete env var", sl.Err(err))
 		return err

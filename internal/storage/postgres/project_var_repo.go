@@ -61,3 +61,18 @@ func (r *Repo) DeleteProjectVar(ctx context.Context, id string) error {
 	_, err := r.executor.Exec(ctx, query, id)
 	return mapError(err)
 }
+
+func (r *Repo) ProjectOwnerByProjectVarID(ctx context.Context, varID string) (string, error) {
+	query := `
+		SELECT p.owner_id
+		FROM projects.project_vars pv
+		JOIN projects.projects p ON pv.project_id = p.id
+		WHERE pv.id = $1
+	`
+	var ownerID string
+	err := r.executor.QueryRow(ctx, query, varID).Scan(&ownerID)
+	if err != nil {
+		return "", mapError(err)
+	}
+	return ownerID, nil
+}
