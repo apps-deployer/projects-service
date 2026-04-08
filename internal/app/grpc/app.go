@@ -35,6 +35,7 @@ func New(
 	envVarService varsgrpc.EnvVarsService,
 	varsAggregationService varsgrpc.VarsAggregationService,
 	port int,
+	jwtSecret string,
 ) *App {
 	loggingOpts := []logging.Option{
 		logging.WithLogOnEvents(
@@ -52,6 +53,7 @@ func New(
 
 	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
 		recovery.UnaryServerInterceptor(recoveryOpts...),
+		AuthInterceptor(jwtSecret),
 		logging.UnaryServerInterceptor(InterceptorLogger(log), loggingOpts...),
 	))
 

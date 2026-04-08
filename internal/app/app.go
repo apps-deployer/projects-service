@@ -23,6 +23,7 @@ func New(
 	grpcPort int,
 	dbUrl string,
 	encryptionKey string,
+	jwtSecret string,
 ) *App {
 	storage, err := postgres.New(dbUrl, encryptionKey)
 	if err != nil {
@@ -45,6 +46,7 @@ func New(
 		varService,
 		varService,
 		grpcPort,
+		jwtSecret,
 	)
 
 	return &App{

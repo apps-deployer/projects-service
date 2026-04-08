@@ -3,6 +3,7 @@ package projectsgrpc
 import (
 	"context"
 
+	"github.com/apps-deployer/projects-service/internal/auth"
 	"github.com/apps-deployer/projects-service/internal/domain/models"
 	projectsv1 "github.com/apps-deployer/protos/gen/go/projects/v1"
 	"google.golang.org/grpc"
@@ -49,10 +50,13 @@ func (s *projectsServer) ListProjects(
 	ctx context.Context,
 	req *projectsv1.ListProjectsRequest,
 ) (*projectsv1.ListProjectsResponse, error) {
-	if !req.HasOwnerId() {
-		return nil, status.Error(codes.InvalidArgument, "owner ID is required")
+	ownerID, ok := auth.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user not authenticated")
 	}
-	projects, err := s.projects.List(ctx, protoToListProjectsParams(req))
+	params := protoToListProjectsParams(req)
+	params.OwnerId = ownerID
+	projects, err := s.projects.List(ctx, params)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list projects: %v", err)
 	}
@@ -63,19 +67,22 @@ func (s *projectsServer) CreateProject(
 	ctx context.Context,
 	req *projectsv1.CreateProjectRequest,
 ) (*projectsv1.ProjectResponse, error) {
+	ownerID, ok := auth.UserIDFromContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "user not authenticated")
+	}
 	if !req.HasName() {
 		return nil, status.Error(codes.InvalidArgument, "project name is required")
 	}
 	if !req.HasRepoUrl() {
 		return nil, status.Error(codes.InvalidArgument, "project repo URL is required")
 	}
-	if !req.HasOwnerId() {
-		return nil, status.Error(codes.InvalidArgument, "project owner ID is required")
-	}
 	if !req.HasDeployConfigTemplateId() {
 		return nil, status.Error(codes.InvalidArgument, "deploy config template is required")
 	}
-	project, err := s.projects.Create(ctx, protoToCreateProjectsParams(req))
+	params := protoToCreateProjectsParams(req)
+	params.OwnerId = ownerID
+	project, err := s.projects.Create(ctx, params)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create project: %v", err)
 	}
