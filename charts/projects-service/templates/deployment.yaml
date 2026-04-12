@@ -16,17 +16,17 @@ spec:
       initContainers:
         - name: migrator
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["./migrator"]
+          args:
+            - "--url"
+            - "postgres://postgres:$(DB_ADMIN_PASSWORD)@{{ .Values.db.host }}:{{ .Values.db.port }}/{{ .Values.db.name }}"
           env:
-            - name: CONFIG_PATH
-              value: /app/config/config.yaml
-          envFrom:
-            - secretRef:
-                name: projects-service-secret
-          volumeMounts:
-            - name: config
-              mountPath: /app/config/config.yaml
-              subPath: config.yaml
+            - name: DB_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: projects-service-secret
+                  key: DB_ADMIN_PASSWORD
       containers:
         - name: projects-service
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
