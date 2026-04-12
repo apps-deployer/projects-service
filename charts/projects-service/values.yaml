@@ -16,6 +16,7 @@ grpc:
 
 secrets:
   dbPassword: ""
+  dbAdminPassword: ""
   jwtSecret: ""
   encryptionKey: ""
 
