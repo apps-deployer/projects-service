@@ -1,0 +1,18 @@
+env: "docker"
+
+grpc:
+  port: 50051
+  timeout: 5s
+
+db:
+  host: "postgres-projects"
+  port: 5432
+  user: "postgres"
+  pass: "postgres"
+  name: "projects_db"
+
+auth:
+  jwt_secret: "change-me-in-production"
+
+crypto:
+  encryption_key: "change-me-32-byte-key-1234567890!"
