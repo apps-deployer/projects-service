@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: projects-service-config
+  namespace: {{ .Values.namespace }}
+data:
+  config.yaml: |
+    env: prod
+    db:
+      host: {{ .Values.db.host }}
+      port: {{ .Values.db.port }}
+      user: {{ .Values.db.user }}
+      name: {{ .Values.db.name }}
+    grpc:
+      port: {{ .Values.grpc.port }}
+      timeout: 5s
