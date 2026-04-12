@@ -18,7 +18,6 @@ WORKDIR /app
 COPY --from=builder /build/projects_service .
 COPY --from=builder /build/migrator .
 COPY migrations/ migrations/
-COPY config/ config/
 
 EXPOSE 50051
 
