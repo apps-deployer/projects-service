@@ -3,6 +3,7 @@ package config
 import (
 	"flag"
 	"fmt"
+	"net/url"
 	"os"
 	"time"
 
@@ -27,15 +28,13 @@ type DbConfig struct {
 }
 
 func (c DbConfig) Url() string {
-	return fmt.Sprintf(
-		"%s://%s:%s@%s:%d/%s",
-		c.Driver,
-		c.User,
-		c.Pass,
-		c.Host,
-		c.Port,
-		c.Name,
-	)
+	u := &url.URL{
+		Scheme: c.Driver,
+		User:   url.UserPassword(c.User, c.Pass),
+		Host:   fmt.Sprintf("%s:%d", c.Host, c.Port),
+		Path:   c.Name,
+	}
+	return u.String()
 }
 
 type GrpcConfig struct {
