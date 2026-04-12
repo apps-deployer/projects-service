@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: projects-service
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: projects-service
+  template:
+    metadata:
+      labels:
+        app: projects-service
+    spec:
+      initContainers:
+        - name: migrator
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          command: ["./migrator"]
+          env:
+            - name: CONFIG_PATH
+              value: /app/config/config.yaml
+          envFrom:
+            - secretRef:
+                name: projects-service-secret
+          volumeMounts:
+            - name: config
+              mountPath: /app/config/config.yaml
+              subPath: config.yaml
+      containers:
+        - name: projects-service
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.grpc.port }}
+          env:
+            - name: CONFIG_PATH
+              value: /app/config/config.yaml
+          envFrom:
+            - secretRef:
+                name: projects-service-secret
+          volumeMounts:
+            - name: config
+              mountPath: /app/config/config.yaml
+              subPath: config.yaml
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: config
+          configMap:
+            name: projects-service-config

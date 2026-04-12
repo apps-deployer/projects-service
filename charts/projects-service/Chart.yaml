@@ -1,0 +1,5 @@
+apiVersion: v2
+name: projects-service
+description: gRPC service for managing projects, environments, and deploy configs
+type: application
+version: 0.1.0
