@@ -50,6 +50,7 @@ jobs:
             --set image.repository="${{ vars.REGISTRY_ENDPOINT }}/projects-service" \
             --set image.tag="${{ github.ref_name }}" \
             --set secrets.dbPassword="${{ secrets.PG_PROJECTS_PASSWORD }}" \
+            --set secrets.dbAdminPassword="${{ secrets.PG_PROJECTS_ADMIN_PASSWORD }}" \
             --set secrets.jwtSecret="${{ secrets.JWT_SECRET }}" \
             --set secrets.encryptionKey="${{ secrets.ENCRYPTION_KEY }}" \
             --wait --timeout 120s
