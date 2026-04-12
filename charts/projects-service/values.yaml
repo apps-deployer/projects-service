@@ -1,0 +1,28 @@
+image:
+  repository: ""
+  tag: latest
+  pullPolicy: IfNotPresent
+
+namespace: apps-deployer
+
+db:
+  host: postgres-projects-postgresql
+  port: 5432
+  user: projects-service
+  name: projects_db
+
+grpc:
+  port: 50051
+
+secrets:
+  dbPassword: ""
+  jwtSecret: ""
+  encryptionKey: ""
+
+resources:
+  requests:
+    memory: 128Mi
+    cpu: 100m
+  limits:
+    memory: 256Mi
+    cpu: 500m
