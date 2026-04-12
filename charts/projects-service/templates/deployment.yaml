@@ -20,13 +20,13 @@ spec:
           command: ["./migrator"]
           args:
             - "--url"
-            - "postgres://postgres:$(DB_ADMIN_PASSWORD)@{{ .Values.db.host }}:{{ .Values.db.port }}/{{ .Values.db.name }}"
+            - "$(DB_ADMIN_URL)"
           env:
-            - name: DB_ADMIN_PASSWORD
+            - name: DB_ADMIN_URL
               valueFrom:
                 secretKeyRef:
                   name: projects-service-secret
-                  key: DB_ADMIN_PASSWORD
+                  key: DB_ADMIN_URL
       containers:
         - name: projects-service
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}

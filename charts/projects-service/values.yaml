@@ -16,7 +16,7 @@ grpc:
 
 secrets:
   dbPassword: ""
-  dbAdminPassword: ""
+  dbAdminPassword: ""  # used only to construct DB_ADMIN_URL, not passed directly
   jwtSecret: ""
   encryptionKey: ""
 
