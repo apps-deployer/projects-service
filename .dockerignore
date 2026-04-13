@@ -1,0 +1,5 @@
+config/
+charts/
+.github/
+.git/
+*.md
