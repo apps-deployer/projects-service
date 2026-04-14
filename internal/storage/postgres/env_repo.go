@@ -8,7 +8,7 @@ import (
 
 func (r *Repo) Env(ctx context.Context, id string) (*models.Env, error) {
 	query := `
-		SELECT id, name, project_id, target_branch, domain_name, created_at, updated_at
+		SELECT id, name, project_id, target_branch, COALESCE(domain_name, ''), created_at, updated_at
 		FROM projects.envs
 		WHERE id = $1
 	`
@@ -23,7 +23,7 @@ func (r *Repo) Env(ctx context.Context, id string) (*models.Env, error) {
 
 func (r *Repo) EnvByGit(ctx context.Context, repoUrl string, branch string) (*models.Env, error) {
 	query := `
-		SELECT e.id, e.name, e.project_id, e.target_branch, e.domain_name, e.created_at, e.updated_at
+		SELECT e.id, e.name, e.project_id, e.target_branch, COALESCE(e.domain_name, ''), e.created_at, e.updated_at
 		FROM projects.envs e
 		JOIN projects.projects p ON e.project_id = p.id
 		WHERE p.repo_url = $1 AND e.target_branch = $2
@@ -39,7 +39,7 @@ func (r *Repo) EnvByGit(ctx context.Context, repoUrl string, branch string) (*mo
 
 func (r *Repo) ListEnvs(ctx context.Context, args *models.ListEnvsParams) ([]*models.Env, error) {
 	query := `
-		SELECT id, name, project_id, target_branch, domain_name, created_at, updated_at
+		SELECT id, name, project_id, target_branch, COALESCE(domain_name, ''), created_at, updated_at
 		FROM projects.envs
 		WHERE project_id = $1
 		ORDER BY created_at DESC
