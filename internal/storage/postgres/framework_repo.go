@@ -8,7 +8,10 @@ import (
 
 func (r *Repo) Framework(ctx context.Context, id string) (*models.Framework, error) {
 	query := `
-		SELECT id, name, base_image, root_dir, output_dir, install_cmd, build_cmd, run_cmd, created_at, updated_at
+		SELECT id, name, base_image,
+		       COALESCE(root_dir, ''), COALESCE(output_dir, ''),
+		       COALESCE(install_cmd, ''), COALESCE(build_cmd, ''), COALESCE(run_cmd, ''),
+		       created_at, updated_at
 		FROM projects.frameworks
 		WHERE id = $1
 	`
@@ -23,7 +26,10 @@ func (r *Repo) Framework(ctx context.Context, id string) (*models.Framework, err
 
 func (r *Repo) ListFrameworks(ctx context.Context, args *models.ListFrameworksParams) ([]*models.Framework, error) {
 	query := `
-		SELECT id, name, base_image, root_dir, output_dir, install_cmd, build_cmd, run_cmd, created_at, updated_at
+		SELECT id, name, base_image,
+		       COALESCE(root_dir, ''), COALESCE(output_dir, ''),
+		       COALESCE(install_cmd, ''), COALESCE(build_cmd, ''), COALESCE(run_cmd, ''),
+		       created_at, updated_at
 		FROM projects.frameworks
 		ORDER BY created_at DESC
 		LIMIT $1 OFFSET $2
