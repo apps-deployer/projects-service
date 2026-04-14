@@ -1,3 +1,6 @@
 GRANT USAGE ON SCHEMA projects TO "projects-service";
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA projects TO "projects-service";
 ALTER DEFAULT PRIVILEGES IN SCHEMA projects GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO "projects-service";
+
+GRANT USAGE ON SCHEMA crypto TO "projects-service";
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA crypto TO "projects-service";
