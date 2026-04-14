@@ -8,18 +8,18 @@ import (
 
 func (r *Repo) DeployConfig(ctx context.Context, projectId string) (*models.DeployConfig, error) {
 	query := `
-		SELECT 
+		SELECT
 			c.id,
-		    c.project_id,
-		    c.framework_id,
-		    c.base_image_override,
-		    c.root_dir_override,
-		    c.output_dir_override,
-		    c.install_cmd_override,
-		    c.build_cmd_override,
-		    c.run_cmd_override,
-		    c.created_at,
-		    c.updated_at
+			c.project_id,
+			c.framework_id,
+			COALESCE(c.base_image_override, ''),
+			COALESCE(c.root_dir_override, ''),
+			COALESCE(c.output_dir_override, ''),
+			COALESCE(c.install_cmd_override, ''),
+			COALESCE(c.build_cmd_override, ''),
+			COALESCE(c.run_cmd_override, ''),
+			c.created_at,
+			c.updated_at
 		FROM projects.deploy_configs AS c
 		WHERE c.project_id = $1
 	`
