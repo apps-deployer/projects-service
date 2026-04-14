@@ -9,12 +9,12 @@ import (
 func (r *Repo) ResolvedVars(ctx context.Context, envId string) ([]*models.ResolvedVar, error) {
 	query := `
 		WITH env_vars AS (
-			SELECT key, pgp_sym_decrypt(value, $2)::text AS value
+			SELECT key, crypto.pgp_sym_decrypt(value, $2)::text AS value
 			FROM projects.env_vars
 			WHERE env_id = $1
 		),
 		project_vars AS (
-			SELECT pv.key, pgp_sym_decrypt(pv.value, $2)::text AS value
+			SELECT pv.key, crypto.pgp_sym_decrypt(pv.value, $2)::text AS value
 			FROM projects.project_vars pv
 			JOIN projects.envs e ON pv.project_id = e.project_id
 			WHERE e.id = $1
