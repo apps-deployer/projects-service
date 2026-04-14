@@ -99,7 +99,7 @@ Value:     "plaintext-value",
 if err != nil {
 t.Fatalf("unexpected error: %v", err)
 }
-if !strings.Contains(exec.lastSQL, "pgp_sym_encrypt") {
+if !strings.Contains(exec.lastSQL, "crypto.pgp_sym_encrypt") {
 t.Errorf("expected SQL to contain pgp_sym_encrypt, got:\n%s", exec.lastSQL)
 }
 foundKey := false
@@ -126,7 +126,7 @@ Value: &newVal,
 if err != nil {
 t.Fatalf("unexpected error: %v", err)
 }
-if !strings.Contains(exec.lastSQL, "pgp_sym_encrypt") {
+if !strings.Contains(exec.lastSQL, "crypto.pgp_sym_encrypt") {
 t.Errorf("expected SQL to contain pgp_sym_encrypt, got:\n%s", exec.lastSQL)
 }
 }
@@ -147,7 +147,7 @@ Value: "s3cr3t",
 if err != nil {
 t.Fatalf("unexpected error: %v", err)
 }
-if !strings.Contains(exec.lastSQL, "pgp_sym_encrypt") {
+if !strings.Contains(exec.lastSQL, "crypto.pgp_sym_encrypt") {
 t.Errorf("expected SQL to contain pgp_sym_encrypt, got:\n%s", exec.lastSQL)
 }
 }
@@ -164,7 +164,7 @@ Value: &newVal,
 if err != nil {
 t.Fatalf("unexpected error: %v", err)
 }
-if !strings.Contains(exec.lastSQL, "pgp_sym_encrypt") {
+if !strings.Contains(exec.lastSQL, "crypto.pgp_sym_encrypt") {
 t.Errorf("expected SQL to contain pgp_sym_encrypt, got:\n%s", exec.lastSQL)
 }
 }
@@ -177,7 +177,7 @@ _, err := repo.ResolvedVars(context.Background(), "env-uuid")
 if err != nil {
 t.Fatalf("unexpected error: %v", err)
 }
-if !strings.Contains(exec.lastSQL, "pgp_sym_decrypt") {
+if !strings.Contains(exec.lastSQL, "crypto.pgp_sym_decrypt") {
 t.Errorf("expected SQL to contain pgp_sym_decrypt, got:\n%s", exec.lastSQL)
 }
 foundKey := false

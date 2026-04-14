@@ -34,7 +34,7 @@ func (r *Repo) ListEnvVars(ctx context.Context, args *models.ListEnvVarsParams) 
 func (r *Repo) SaveEnvVar(ctx context.Context, args *models.CreateEnvVarParams) (*models.SaveVarResponse, error) {
 	query := `
 		INSERT INTO projects.env_vars (env_id, key, value)
-		VALUES ($1, $2, pgp_sym_encrypt($3::text, $4))
+		VALUES ($1, $2, crypto.pgp_sym_encrypt($3::text, $4))
 		RETURNING id, created_at, updated_at
 	`
 	row := r.executor.QueryRow(ctx, query, args.EnvId, args.Key, args.Value, r.encryptionKey)
@@ -49,7 +49,7 @@ func (r *Repo) SaveEnvVar(ctx context.Context, args *models.CreateEnvVarParams) 
 func (r *Repo) UpdateEnvVar(ctx context.Context, args *models.UpdateVarParams) error {
 	query := `
 		UPDATE projects.env_vars
-		SET value = CASE WHEN $2::text IS NOT NULL THEN pgp_sym_encrypt($2::text, $3) ELSE value END
+		SET value = CASE WHEN $2::text IS NOT NULL THEN crypto.pgp_sym_encrypt($2::text, $3) ELSE value END
 		WHERE id = $1
 	`
 	_, err := r.executor.Exec(ctx, query, args.Id, args.Value, r.encryptionKey)

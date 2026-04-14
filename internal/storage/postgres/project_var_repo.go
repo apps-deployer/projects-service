@@ -34,7 +34,7 @@ func (r *Repo) ListProjectVars(ctx context.Context, args *models.ListProjectVars
 func (r *Repo) SaveProjectVar(ctx context.Context, args *models.CreateProjectVarParams) (*models.SaveVarResponse, error) {
 	query := `
 		INSERT INTO projects.project_vars (project_id, key, value)
-		VALUES ($1, $2, pgp_sym_encrypt($3::text, $4))
+		VALUES ($1, $2, crypto.pgp_sym_encrypt($3::text, $4))
 		RETURNING id, created_at, updated_at
 	`
 	row := r.executor.QueryRow(ctx, query, args.ProjectId, args.Key, args.Value, r.encryptionKey)
@@ -49,7 +49,7 @@ func (r *Repo) SaveProjectVar(ctx context.Context, args *models.CreateProjectVar
 func (r *Repo) UpdateProjectVar(ctx context.Context, args *models.UpdateVarParams) error {
 	query := `
 		UPDATE projects.project_vars
-		SET value = CASE WHEN $2::text IS NOT NULL THEN pgp_sym_encrypt($2::text, $3) ELSE value END
+		SET value = CASE WHEN $2::text IS NOT NULL THEN crypto.pgp_sym_encrypt($2::text, $3) ELSE value END
 		WHERE id = $1
 	`
 	_, err := r.executor.Exec(ctx, query, args.Id, args.Value, r.encryptionKey)
