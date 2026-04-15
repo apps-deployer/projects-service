@@ -9,7 +9,6 @@ type Env struct {
 	Name         string
 	ProjectId    string
 	TargetBranch string
-	DomainName   string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }
@@ -23,14 +22,12 @@ type CreateEnvParams struct {
 	Name         string
 	ProjectId    string
 	TargetBranch string
-	DomainName   string
 }
 
 type UpdateEnvParams struct {
 	Id           string
 	Name         *string
 	TargetBranch *string
-	DomainName   *string
 }
 
 type ListEnvsParams struct {
@@ -54,7 +51,6 @@ func NewEnvFromSaveResponse(
 		Name:         args.Name,
 		ProjectId:    args.ProjectId,
 		TargetBranch: args.TargetBranch,
-		DomainName:   args.DomainName,
 		CreatedAt:    res.CreatedAt,
 		UpdatedAt:    res.UpdatedAt,
 	}

@@ -12,9 +12,9 @@ func envToProto(e *models.Env) *projectsv1.EnvResponse {
 		Name:         &e.Name,
 		ProjectId:    &e.ProjectId,
 		TargetBranch: &e.TargetBranch,
-		DomainName:   &e.DomainName,
-		CreatedAt:    timestamppb.New(e.CreatedAt),
-		UpdatedAt:    timestamppb.New(e.UpdatedAt),
+
+		CreatedAt: timestamppb.New(e.CreatedAt),
+		UpdatedAt: timestamppb.New(e.UpdatedAt),
 	}.Build()
 }
 
@@ -48,7 +48,6 @@ func protoToCreateEnvParams(req *projectsv1.CreateEnvRequest) *models.CreateEnvP
 		Name:         req.GetName(),
 		ProjectId:    req.GetProjectId(),
 		TargetBranch: req.GetTargetBranch(),
-		DomainName:   req.GetDomainName(),
 	}
 }
 
@@ -61,10 +60,6 @@ func protoToUpdateEnvParams(req *projectsv1.UpdateEnvRequest) *models.UpdateEnvP
 	if req.HasTargetBranch() {
 		targetBranch := req.GetTargetBranch()
 		env.TargetBranch = &targetBranch
-	}
-	if req.HasDomainName() {
-		domainName := req.GetDomainName()
-		env.DomainName = &domainName
 	}
 	return env
 }
