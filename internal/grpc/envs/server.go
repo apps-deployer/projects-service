@@ -97,9 +97,6 @@ func (s *envsServer) CreateEnv(
 	if !req.HasTargetBranch() {
 		return nil, status.Error(codes.InvalidArgument, "env target branch is required")
 	}
-	if !req.HasDomainName() {
-		return nil, status.Error(codes.InvalidArgument, "env domain name is required")
-	}
 	env, err := s.envs.Create(ctx, protoToCreateEnvParams(req))
 	if err != nil {
 		return nil, grpcutil.MapError(err, "create env")

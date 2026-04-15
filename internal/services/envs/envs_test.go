@@ -109,7 +109,7 @@ func testEnv() *models.Env {
 	now := time.Now()
 	return &models.Env{
 		Id: "env-1", Name: "production", ProjectId: testProjectID,
-		TargetBranch: "main", DomainName: "example.com",
+		TargetBranch: "main",
 		CreatedAt: now, UpdatedAt: now,
 	}
 }
@@ -177,7 +177,7 @@ func TestCreate_HappyPath(t *testing.T) {
 	})
 	env, err := svc.Create(authedCtx(), &models.CreateEnvParams{
 		Name: "staging", ProjectId: testProjectID,
-		TargetBranch: "develop", DomainName: "staging.example.com",
+		TargetBranch: "develop",
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -194,7 +194,7 @@ func TestCreate_PermissionDenied(t *testing.T) {
 	svc := newService(otherProject, &mockEnvRepo{})
 	_, err := svc.Create(authedCtx(), &models.CreateEnvParams{
 		Name: "staging", ProjectId: testProjectID,
-		TargetBranch: "develop", DomainName: "staging.example.com",
+		TargetBranch: "develop",
 	})
 	if !errors.Is(err, auth.ErrPermissionDenied) {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)
