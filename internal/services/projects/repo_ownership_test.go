@@ -15,11 +15,7 @@ func TestGitHubRepoOwner(t *testing.T) {
 		repoURL string
 		want    string
 	}{
-		{name: "https", repoURL: "https://github.com/octocat/hello-world", want: "octocat"},
 		{name: "https git suffix", repoURL: "https://github.com/octocat/hello-world.git", want: "octocat"},
-		{name: "ssh scp", repoURL: "git@github.com:octocat/hello-world.git", want: "octocat"},
-		{name: "ssh url", repoURL: "ssh://git@github.com/octocat/hello-world.git", want: "octocat"},
-		{name: "host path", repoURL: "github.com/octocat/hello-world", want: "octocat"},
 	}
 
 	for _, tt := range tests {
@@ -35,18 +31,47 @@ func TestGitHubRepoOwner(t *testing.T) {
 	}
 }
 
+func TestCanonicalGitHubHTTPSRepoURL(t *testing.T) {
+	got, err := canonicalGitHubHTTPSRepoURL(" https://github.com/octocat/hello-world.git ")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got != "https://github.com/octocat/hello-world.git" {
+		t.Fatalf("unexpected canonical URL: %q", got)
+	}
+}
+
+func TestCanonicalGitHubHTTPSRepoURLRejectsUnsupportedFormats(t *testing.T) {
+	tests := []string{
+		"https://github.com/octocat/hello-world",
+		"git@github.com:octocat/hello-world.git",
+		"ssh://git@github.com/octocat/hello-world.git",
+		"github.com/octocat/hello-world.git",
+		"https://gitlab.com/octocat/hello-world.git",
+		"https://github.com/octocat/hello-world.git/",
+	}
+
+	for _, repoURL := range tests {
+		t.Run(repoURL, func(t *testing.T) {
+			if _, err := canonicalGitHubHTTPSRepoURL(repoURL); err == nil {
+				t.Fatalf("expected error")
+			}
+		})
+	}
+}
+
 func TestValidateRepoOwnership(t *testing.T) {
 	ctx := auth.WithUser(context.Background(), "user-1", "octocat")
-	if err := validateRepoOwnership(ctx, "https://github.com/octocat/hello-world"); err != nil {
+	if err := validateRepoOwnership(ctx, "https://github.com/octocat/hello-world.git"); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	err := validateRepoOwnership(ctx, "https://github.com/other/hello-world")
+	err := validateRepoOwnership(ctx, "https://github.com/other/hello-world.git")
 	if !errors.Is(err, auth.ErrPermissionDenied) {
 		t.Fatalf("expected ErrPermissionDenied, got %v", err)
 	}
 
-	err = validateRepoOwnership(ctx, "https://gitlab.com/octocat/hello-world")
+	err = validateRepoOwnership(ctx, "https://github.com/octocat/hello-world")
 	if !errors.Is(err, services.ErrInvalidArgument) {
 		t.Fatalf("expected ErrInvalidArgument, got %v", err)
 	}

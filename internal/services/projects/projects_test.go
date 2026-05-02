@@ -49,6 +49,8 @@ type mockProjectRepo struct {
 	listErr    error
 	saveResp   *models.SaveProjectResponse
 	saveErr    error
+	saveArgs   *models.SaveProjectParams
+	updateArgs *models.UpdateProjectParams
 	updateErr  error
 	deleteErr  error
 }
@@ -59,10 +61,12 @@ func (m *mockProjectRepo) Project(_ context.Context, _ string) (*models.Project,
 func (m *mockProjectRepo) ListProjects(_ context.Context, _ *models.ListProjectsParams) ([]*models.Project, error) {
 	return m.listResp, m.listErr
 }
-func (m *mockProjectRepo) SaveProject(_ context.Context, _ *models.SaveProjectParams) (*models.SaveProjectResponse, error) {
+func (m *mockProjectRepo) SaveProject(_ context.Context, args *models.SaveProjectParams) (*models.SaveProjectResponse, error) {
+	m.saveArgs = args
 	return m.saveResp, m.saveErr
 }
-func (m *mockProjectRepo) UpdateProject(_ context.Context, _ *models.UpdateProjectParams) error {
+func (m *mockProjectRepo) UpdateProject(_ context.Context, args *models.UpdateProjectParams) error {
+	m.updateArgs = args
 	return m.updateErr
 }
 func (m *mockProjectRepo) DeleteProject(_ context.Context, _ string) error {
@@ -102,7 +106,7 @@ func testProject() *models.Project {
 	return &models.Project{
 		Id:      "proj-1",
 		Name:    "test",
-		RepoUrl: "https://github.com/test/repo",
+		RepoUrl: "https://github.com/test/repo.git",
 		OwnerId: testUserID,
 	}
 }
@@ -174,7 +178,7 @@ func TestCreate_HappyPath(t *testing.T) {
 
 	result, err := svc.Create(authedCtx(testUserID), &models.CreateProjectParams{
 		Name:        "new-project",
-		RepoUrl:     "https://github.com/test/new",
+		RepoUrl:     " https://github.com/test/new.git ",
 		OwnerId:     testUserID,
 		FrameworkId: "fw-1",
 	})
@@ -183,6 +187,9 @@ func TestCreate_HappyPath(t *testing.T) {
 	}
 	if result.Id != "new-proj" {
 		t.Errorf("expected id %q, got %q", "new-proj", result.Id)
+	}
+	if repo.saveArgs == nil || repo.saveArgs.RepoUrl != "https://github.com/test/new.git" {
+		t.Errorf("expected canonical repo URL, got %#v", repo.saveArgs)
 	}
 }
 
@@ -200,7 +207,7 @@ func TestCreate_RepoOwnerMismatch(t *testing.T) {
 
 	_, err := svc.Create(authedCtx(testUserID), &models.CreateProjectParams{
 		Name:        "new-project",
-		RepoUrl:     "https://github.com/another/new",
+		RepoUrl:     "https://github.com/another/new.git",
 		OwnerId:     testUserID,
 		FrameworkId: "fw-1",
 	})
@@ -223,7 +230,7 @@ func TestCreate_MissingGitHubLogin(t *testing.T) {
 
 	_, err := svc.Create(auth.WithUserID(context.Background(), testUserID), &models.CreateProjectParams{
 		Name:        "new-project",
-		RepoUrl:     "https://github.com/test/new",
+		RepoUrl:     "https://github.com/test/new.git",
 		OwnerId:     testUserID,
 		FrameworkId: "fw-1",
 	})
@@ -252,13 +259,31 @@ func TestUpdate_RepoOwnerMismatch(t *testing.T) {
 	repo := &mockProjectRepo{project: proj}
 	svc := projects.New(newLogger(), &mockStorage{factory: &mockRepoFactory{projects: repo}})
 
-	repoURL := "https://github.com/another/repo"
+	repoURL := "https://github.com/another/repo.git"
 	err := svc.Update(authedCtx(testUserID), &models.UpdateProjectParams{
 		Id:      "proj-1",
 		RepoUrl: &repoURL,
 	})
 	if !errors.Is(err, auth.ErrPermissionDenied) {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
+
+func TestUpdate_CanonicalizesRepoURL(t *testing.T) {
+	proj := testProject()
+	repo := &mockProjectRepo{project: proj}
+	svc := projects.New(newLogger(), &mockStorage{factory: &mockRepoFactory{projects: repo}})
+
+	repoURL := " https://github.com/test/repo.git "
+	err := svc.Update(authedCtx(testUserID), &models.UpdateProjectParams{
+		Id:      "proj-1",
+		RepoUrl: &repoURL,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if repo.updateArgs == nil || repo.updateArgs.RepoUrl == nil || *repo.updateArgs.RepoUrl != "https://github.com/test/repo.git" {
+		t.Fatalf("expected canonical repo URL, got %#v", repo.updateArgs)
 	}
 }
 

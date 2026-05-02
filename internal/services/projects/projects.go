@@ -2,6 +2,7 @@ package projects
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
 	"github.com/apps-deployer/projects-service/internal/auth"
@@ -73,13 +74,18 @@ func (p *Projects) Create(ctx context.Context, args *models.CreateProjectParams)
 		log.Warn("repository ownership check failed", sl.Err(err))
 		return nil, err
 	}
+	repoURL, err := canonicalGitHubHTTPSRepoURL(args.RepoUrl)
+	if err != nil {
+		log.Warn("repository URL normalization failed", sl.Err(err))
+		return nil, fmt.Errorf("%w: %v", services.ErrInvalidArgument, err)
+	}
 	project := &models.SaveProjectParams{
 		Name:    args.Name,
-		RepoUrl: args.RepoUrl,
+		RepoUrl: repoURL,
 		OwnerId: args.OwnerId,
 	}
 	var response *models.SaveProjectResponse
-	err := p.storage.WithinTx(ctx, func(tx services.RepoFactory) error {
+	err = p.storage.WithinTx(ctx, func(tx services.RepoFactory) error {
 		res, err := tx.Projects().SaveProject(ctx, project)
 		if err != nil {
 			return err
@@ -120,10 +126,16 @@ func (p *Projects) Update(ctx context.Context, args *models.UpdateProjectParams)
 		return err
 	}
 	if args.RepoUrl != nil {
-		if err := validateRepoOwnership(ctx, *args.RepoUrl); err != nil {
+		repoURL, err := canonicalGitHubHTTPSRepoURL(*args.RepoUrl)
+		if err != nil {
+			log.Warn("repository URL normalization failed", sl.Err(err))
+			return fmt.Errorf("%w: %v", services.ErrInvalidArgument, err)
+		}
+		if err := validateRepoOwnership(ctx, repoURL); err != nil {
 			log.Warn("repository ownership check failed", sl.Err(err))
 			return err
 		}
+		args.RepoUrl = &repoURL
 	}
 	err = p.projects.UpdateProject(ctx, args)
 	if err != nil {
