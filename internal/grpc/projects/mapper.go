@@ -10,6 +10,7 @@ func projectToProto(p *models.Project) *projectsv1.ProjectResponse {
 	return projectsv1.ProjectResponse_builder{
 		Id:        &p.Id,
 		Name:      &p.Name,
+		Slug:      &p.Slug,
 		RepoUrl:   &p.RepoUrl,
 		OwnerId:   &p.OwnerId,
 		CreatedAt: timestamppb.New(p.CreatedAt),

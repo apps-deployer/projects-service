@@ -7,11 +7,13 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto SCHEMA crypto;
 CREATE TABLE IF NOT EXISTS projects.projects (
     id UUID PRIMARY KEY DEFAULT uuidv7(),
     name VARCHAR(128) NOT NULL CHECK (char_length(name) > 0),
+    slug VARCHAR(64) NOT NULL CHECK (char_length(slug) > 0),
     owner_id UUID NOT NULL,
     repo_url VARCHAR(512) NOT NULL UNIQUE CHECK (char_length(repo_url) > 0),
     created_at TIMESTAMP NOT NULL DEFAULT now(),
     updated_at TIMESTAMP NOT NULL DEFAULT now(),
-    UNIQUE(owner_id, name)
+    UNIQUE(owner_id, name),
+    UNIQUE(owner_id, slug)
 );
 
 CREATE TABLE IF NOT EXISTS projects.frameworks (

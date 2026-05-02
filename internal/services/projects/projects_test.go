@@ -106,6 +106,7 @@ func testProject() *models.Project {
 	return &models.Project{
 		Id:      "proj-1",
 		Name:    "test",
+		Slug:    "test",
 		RepoUrl: "https://github.com/test/repo.git",
 		OwnerId: testUserID,
 	}
@@ -177,7 +178,7 @@ func TestCreate_HappyPath(t *testing.T) {
 	})
 
 	result, err := svc.Create(authedCtx(testUserID), &models.CreateProjectParams{
-		Name:        "new-project",
+		Name:        "New Project",
 		RepoUrl:     " https://github.com/test/new.git ",
 		OwnerId:     testUserID,
 		FrameworkId: "fw-1",
@@ -190,6 +191,12 @@ func TestCreate_HappyPath(t *testing.T) {
 	}
 	if repo.saveArgs == nil || repo.saveArgs.RepoUrl != "https://github.com/test/new.git" {
 		t.Errorf("expected canonical repo URL, got %#v", repo.saveArgs)
+	}
+	if repo.saveArgs == nil || repo.saveArgs.Name != "New Project" {
+		t.Errorf("expected display project name, got %#v", repo.saveArgs)
+	}
+	if repo.saveArgs == nil || repo.saveArgs.Slug != "new-project" {
+		t.Errorf("expected project slug, got %#v", repo.saveArgs)
 	}
 }
 
@@ -275,8 +282,10 @@ func TestUpdate_CanonicalizesRepoURL(t *testing.T) {
 	svc := projects.New(newLogger(), &mockStorage{factory: &mockRepoFactory{projects: repo}})
 
 	repoURL := " https://github.com/test/repo.git "
+	name := "Python Hello App"
 	err := svc.Update(authedCtx(testUserID), &models.UpdateProjectParams{
 		Id:      "proj-1",
+		Name:    &name,
 		RepoUrl: &repoURL,
 	})
 	if err != nil {
@@ -284,6 +293,12 @@ func TestUpdate_CanonicalizesRepoURL(t *testing.T) {
 	}
 	if repo.updateArgs == nil || repo.updateArgs.RepoUrl == nil || *repo.updateArgs.RepoUrl != "https://github.com/test/repo.git" {
 		t.Fatalf("expected canonical repo URL, got %#v", repo.updateArgs)
+	}
+	if repo.updateArgs == nil || repo.updateArgs.Name == nil || *repo.updateArgs.Name != "Python Hello App" {
+		t.Fatalf("expected display project name, got %#v", repo.updateArgs)
+	}
+	if repo.updateArgs == nil || repo.updateArgs.Slug == nil || *repo.updateArgs.Slug != "python-hello-app" {
+		t.Fatalf("expected project slug, got %#v", repo.updateArgs)
 	}
 }
 

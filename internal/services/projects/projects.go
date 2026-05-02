@@ -74,13 +74,24 @@ func (p *Projects) Create(ctx context.Context, args *models.CreateProjectParams)
 		log.Warn("repository ownership check failed", sl.Err(err))
 		return nil, err
 	}
+	projectName, err := displayProjectName(args.Name)
+	if err != nil {
+		log.Warn("project name validation failed", sl.Err(err))
+		return nil, err
+	}
+	slug, err := projectSlug(projectName)
+	if err != nil {
+		log.Warn("project slug generation failed", sl.Err(err))
+		return nil, err
+	}
 	repoURL, err := canonicalGitHubHTTPSRepoURL(args.RepoUrl)
 	if err != nil {
 		log.Warn("repository URL normalization failed", sl.Err(err))
 		return nil, fmt.Errorf("%w: %v", services.ErrInvalidArgument, err)
 	}
 	project := &models.SaveProjectParams{
-		Name:    args.Name,
+		Name:    projectName,
+		Slug:    slug,
 		RepoUrl: repoURL,
 		OwnerId: args.OwnerId,
 	}
@@ -124,6 +135,20 @@ func (p *Projects) Update(ctx context.Context, args *models.UpdateProjectParams)
 	if err := auth.CheckOwnership(ctx, project.OwnerId); err != nil {
 		log.Warn("ownership check failed", sl.Err(err))
 		return err
+	}
+	if args.Name != nil {
+		projectName, err := displayProjectName(*args.Name)
+		if err != nil {
+			log.Warn("project name validation failed", sl.Err(err))
+			return err
+		}
+		slug, err := projectSlug(projectName)
+		if err != nil {
+			log.Warn("project slug generation failed", sl.Err(err))
+			return err
+		}
+		args.Name = &projectName
+		args.Slug = &slug
 	}
 	if args.RepoUrl != nil {
 		repoURL, err := canonicalGitHubHTTPSRepoURL(*args.RepoUrl)

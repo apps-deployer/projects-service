@@ -7,6 +7,7 @@ import (
 type Project struct {
 	Id        string
 	Name      string
+	Slug      string
 	RepoUrl   string
 	OwnerId   string
 	CreatedAt time.Time
@@ -29,12 +30,14 @@ type CreateProjectParams struct {
 type UpdateProjectParams struct {
 	Id      string
 	Name    *string
+	Slug    *string
 	RepoUrl *string
 	OwnerId *string
 }
 
 type SaveProjectParams struct {
 	Name    string
+	Slug    string
 	RepoUrl string
 	OwnerId string
 }
@@ -52,6 +55,7 @@ func NewProjectFromSaveResponse(
 	return &Project{
 		Id:        res.Id,
 		Name:      args.Name,
+		Slug:      args.Slug,
 		RepoUrl:   args.RepoUrl,
 		OwnerId:   args.OwnerId,
 		CreatedAt: res.CreatedAt,
