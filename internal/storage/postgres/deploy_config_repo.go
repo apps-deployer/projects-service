@@ -18,6 +18,7 @@ func (r *Repo) DeployConfig(ctx context.Context, projectId string) (*models.Depl
 			COALESCE(c.install_cmd_override, ''),
 			COALESCE(c.build_cmd_override, ''),
 			COALESCE(c.run_cmd_override, ''),
+			COALESCE(c.app_port_override, 0),
 			c.created_at,
 			c.updated_at
 		FROM projects.deploy_configs AS c
@@ -25,7 +26,7 @@ func (r *Repo) DeployConfig(ctx context.Context, projectId string) (*models.Depl
 	`
 	row := r.executor.QueryRow(ctx, query, projectId)
 	var dc models.DeployConfig
-	err := row.Scan(&dc.Id, &dc.ProjectId, &dc.FrameworkId, &dc.BaseImageOverride, &dc.RootDirOverride, &dc.OutputDirOverride, &dc.InstallCmdOverride, &dc.BuildCmdOverride, &dc.RunCmdOverride, &dc.CreatedAt, &dc.UpdatedAt)
+	err := row.Scan(&dc.Id, &dc.ProjectId, &dc.FrameworkId, &dc.BaseImageOverride, &dc.RootDirOverride, &dc.OutputDirOverride, &dc.InstallCmdOverride, &dc.BuildCmdOverride, &dc.RunCmdOverride, &dc.AppPortOverride, &dc.CreatedAt, &dc.UpdatedAt)
 	if err != nil {
 		return nil, mapError(err)
 	}
@@ -41,10 +42,11 @@ func (r *Repo) UpdateDeployConfig(ctx context.Context, args *models.UpdateDeploy
 		    output_dir_override = COALESCE($5, output_dir_override),
 		    install_cmd_override = COALESCE($6, install_cmd_override),
 		    build_cmd_override = COALESCE($7, build_cmd_override),
-		    run_cmd_override = COALESCE($8, run_cmd_override)
+		    run_cmd_override = COALESCE($8, run_cmd_override),
+		    app_port_override = COALESCE($9, app_port_override)
 		WHERE id = $1
 	`
-	_, err := r.executor.Exec(ctx, query, args.Id, args.FrameworkId, args.BaseImageOverride, args.RootDirOverride, args.OutputDirOverride, args.InstallCmdOverride, args.BuildCmdOverride, args.RunCmdOverride)
+	_, err := r.executor.Exec(ctx, query, args.Id, args.FrameworkId, args.BaseImageOverride, args.RootDirOverride, args.OutputDirOverride, args.InstallCmdOverride, args.BuildCmdOverride, args.RunCmdOverride, args.AppPortOverride)
 	return mapError(err)
 }
 

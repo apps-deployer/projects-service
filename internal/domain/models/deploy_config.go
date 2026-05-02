@@ -14,6 +14,7 @@ type DeployConfig struct {
 	InstallCmdOverride string
 	BuildCmdOverride   string
 	RunCmdOverride     string
+	AppPortOverride    int32
 	CreatedAt          time.Time
 	UpdatedAt          time.Time
 }
@@ -27,6 +28,7 @@ type UpdateDeployConfigParams struct {
 	InstallCmdOverride *string
 	BuildCmdOverride   *string
 	RunCmdOverride     *string
+	AppPortOverride    *int32
 }
 
 type ResolvedDeployConfig struct {
@@ -38,6 +40,7 @@ type ResolvedDeployConfig struct {
 	InstallCmd string
 	BuildCmd   string
 	RunCmd     string
+	AppPort    int32
 }
 
 type SaveDeployConfigParams struct {
@@ -64,11 +67,19 @@ func NewResolvedDeployConfig(
 		InstallCmd: pick(config.InstallCmdOverride, framework.InstallCmd),
 		BuildCmd:   pick(config.BuildCmdOverride, framework.BuildCmd),
 		RunCmd:     pick(config.RunCmdOverride, framework.RunCmd),
+		AppPort:    pickInt32(config.AppPortOverride, framework.AppPort),
 	}
 }
 
 func pick(override, base string) string {
 	if override != "" {
+		return override
+	}
+	return base
+}
+
+func pickInt32(override, base int32) int32 {
+	if override != 0 {
 		return override
 	}
 	return base

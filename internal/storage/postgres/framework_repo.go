@@ -11,13 +11,14 @@ func (r *Repo) Framework(ctx context.Context, id string) (*models.Framework, err
 		SELECT id, name, base_image,
 		       COALESCE(root_dir, ''), COALESCE(output_dir, ''),
 		       COALESCE(install_cmd, ''), COALESCE(build_cmd, ''), COALESCE(run_cmd, ''),
+		       app_port,
 		       created_at, updated_at
 		FROM projects.frameworks
 		WHERE id = $1
 	`
 	row := r.executor.QueryRow(ctx, query, id)
 	var f models.Framework
-	err := row.Scan(&f.Id, &f.Name, &f.BaseImage, &f.RootDir, &f.OutputDir, &f.InstallCmd, &f.BuildCmd, &f.RunCmd, &f.CreatedAt, &f.UpdatedAt)
+	err := row.Scan(&f.Id, &f.Name, &f.BaseImage, &f.RootDir, &f.OutputDir, &f.InstallCmd, &f.BuildCmd, &f.RunCmd, &f.AppPort, &f.CreatedAt, &f.UpdatedAt)
 	if err != nil {
 		return nil, mapError(err)
 	}
@@ -29,6 +30,7 @@ func (r *Repo) ListFrameworks(ctx context.Context, args *models.ListFrameworksPa
 		SELECT id, name, base_image,
 		       COALESCE(root_dir, ''), COALESCE(output_dir, ''),
 		       COALESCE(install_cmd, ''), COALESCE(build_cmd, ''), COALESCE(run_cmd, ''),
+		       app_port,
 		       created_at, updated_at
 		FROM projects.frameworks
 		ORDER BY created_at DESC
@@ -42,7 +44,7 @@ func (r *Repo) ListFrameworks(ctx context.Context, args *models.ListFrameworksPa
 	var frameworks []*models.Framework
 	for rows.Next() {
 		var f models.Framework
-		err := rows.Scan(&f.Id, &f.Name, &f.BaseImage, &f.RootDir, &f.OutputDir, &f.InstallCmd, &f.BuildCmd, &f.RunCmd, &f.CreatedAt, &f.UpdatedAt)
+		err := rows.Scan(&f.Id, &f.Name, &f.BaseImage, &f.RootDir, &f.OutputDir, &f.InstallCmd, &f.BuildCmd, &f.RunCmd, &f.AppPort, &f.CreatedAt, &f.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -53,11 +55,11 @@ func (r *Repo) ListFrameworks(ctx context.Context, args *models.ListFrameworksPa
 
 func (r *Repo) SaveFramework(ctx context.Context, args *models.CreateFrameworkParams) (*models.SaveFrameworkResponse, error) {
 	query := `
-		INSERT INTO projects.frameworks (name, base_image, root_dir, output_dir, install_cmd, build_cmd, run_cmd)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO projects.frameworks (name, base_image, root_dir, output_dir, install_cmd, build_cmd, run_cmd, app_port)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING id, created_at, updated_at
 	`
-	row := r.executor.QueryRow(ctx, query, args.Name, args.BaseImage, args.RootDir, args.OutputDir, args.InstallCmd, args.BuildCmd, args.RunCmd)
+	row := r.executor.QueryRow(ctx, query, args.Name, args.BaseImage, args.RootDir, args.OutputDir, args.InstallCmd, args.BuildCmd, args.RunCmd, args.AppPort)
 	var res models.SaveFrameworkResponse
 	err := row.Scan(&res.Id, &res.CreatedAt, &res.UpdatedAt)
 	if err != nil {
@@ -75,10 +77,11 @@ func (r *Repo) UpdateFramework(ctx context.Context, args *models.UpdateFramework
 		    output_dir = COALESCE($5, output_dir),
 		    install_cmd = COALESCE($6, install_cmd),
 		    build_cmd = COALESCE($7, build_cmd),
-		    run_cmd = COALESCE($8, run_cmd)
+		    run_cmd = COALESCE($8, run_cmd),
+		    app_port = COALESCE($9, app_port)
 		WHERE id = $1
 	`
-	_, err := r.executor.Exec(ctx, query, args.Id, args.Name, args.BaseImage, args.RootDir, args.OutputDir, args.InstallCmd, args.BuildCmd, args.RunCmd)
+	_, err := r.executor.Exec(ctx, query, args.Id, args.Name, args.BaseImage, args.RootDir, args.OutputDir, args.InstallCmd, args.BuildCmd, args.RunCmd, args.AppPort)
 	return mapError(err)
 }
 

@@ -16,6 +16,7 @@ func frameworkToProto(f *models.Framework) *projectsv1.FrameworkResponse {
 		InstallCmd: &f.InstallCmd,
 		BuildCmd:   &f.BuildCmd,
 		RunCmd:     &f.RunCmd,
+		AppPort:    &f.AppPort,
 		CreatedAt:  timestamppb.New(f.CreatedAt),
 		UpdatedAt:  timestamppb.New(f.UpdatedAt),
 	}.Build()
@@ -39,6 +40,10 @@ func protoToListFrameworksParams(req *projectsv1.ListFrameworksRequest) *models.
 }
 
 func protoToCreateFrameworkParams(req *projectsv1.CreateFrameworkRequest) *models.CreateFrameworkParams {
+	appPort := req.GetAppPort()
+	if appPort == 0 {
+		appPort = 8080
+	}
 	return &models.CreateFrameworkParams{
 		Name:       req.GetName(),
 		RootDir:    req.GetRootDir(),
@@ -47,6 +52,7 @@ func protoToCreateFrameworkParams(req *projectsv1.CreateFrameworkRequest) *model
 		InstallCmd: req.GetInstallCmd(),
 		BuildCmd:   req.GetBuildCmd(),
 		RunCmd:     req.GetRunCmd(),
+		AppPort:    appPort,
 	}
 }
 
@@ -79,6 +85,10 @@ func protoToUpdateFrameworkParams(req *projectsv1.UpdateFrameworkRequest) *model
 	if req.HasRunCmd() {
 		runCmd := req.GetRunCmd()
 		framework.RunCmd = &runCmd
+	}
+	if req.HasAppPort() {
+		appPort := req.GetAppPort()
+		framework.AppPort = &appPort
 	}
 	return framework
 }

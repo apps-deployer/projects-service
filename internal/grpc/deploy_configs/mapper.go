@@ -17,6 +17,7 @@ func deployConfigToProto(c *models.DeployConfig) *projectsv1.DeployConfigRespons
 		InstallCmdOverride: &c.InstallCmdOverride,
 		BuildCmdOverride:   &c.BuildCmdOverride,
 		RunCmdOverride:     &c.RunCmdOverride,
+		AppPortOverride:    &c.AppPortOverride,
 		CreatedAt:          timestamppb.New(c.CreatedAt),
 		UpdatedAt:          timestamppb.New(c.UpdatedAt),
 	}.Build()
@@ -32,6 +33,7 @@ func resolvedDeployConfigToProto(c *models.ResolvedDeployConfig) *projectsv1.Res
 		InstallCmd: &c.InstallCmd,
 		BuildCmd:   &c.BuildCmd,
 		RunCmd:     &c.RunCmd,
+		AppPort:    &c.AppPort,
 	}.Build()
 }
 
@@ -64,6 +66,10 @@ func protoToUpdateDeployConfigParams(req *projectsv1.UpdateDeployConfigRequest) 
 	if req.HasRunCmdOverride() {
 		runCmd := req.GetRunCmdOverride()
 		config.RunCmdOverride = &runCmd
+	}
+	if req.HasAppPortOverride() {
+		appPort := req.GetAppPortOverride()
+		config.AppPortOverride = &appPort
 	}
 	return config
 }

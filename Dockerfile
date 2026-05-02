@@ -3,6 +3,7 @@ FROM golang:1.26-alpine AS builder
 WORKDIR /build
 
 COPY go.mod go.sum ./
+COPY third_party/protos/ third_party/protos/
 RUN go mod download
 
 COPY . .

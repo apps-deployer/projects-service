@@ -13,6 +13,7 @@ type Framework struct {
 	InstallCmd string
 	BuildCmd   string
 	RunCmd     string
+	AppPort    int32
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 }
@@ -30,6 +31,7 @@ type CreateFrameworkParams struct {
 	InstallCmd string
 	BuildCmd   string
 	RunCmd     string
+	AppPort    int32
 }
 
 type UpdateFrameworkParams struct {
@@ -41,6 +43,7 @@ type UpdateFrameworkParams struct {
 	InstallCmd *string
 	BuildCmd   *string
 	RunCmd     *string
+	AppPort    *int32
 }
 
 type SaveFrameworkResponse struct {
@@ -62,6 +65,7 @@ func NewFrameworkFromSaveResponse(
 		InstallCmd: args.InstallCmd,
 		BuildCmd:   args.BuildCmd,
 		RunCmd:     args.RunCmd,
+		AppPort:    args.AppPort,
 		CreatedAt:  res.CreatedAt,
 		UpdatedAt:  res.UpdatedAt,
 	}
