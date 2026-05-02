@@ -95,7 +95,7 @@ func newLogger() *slog.Logger {
 }
 
 func authedCtx(userID string) context.Context {
-	return auth.WithUserID(context.Background(), userID)
+	return auth.WithUser(context.Background(), userID, "test")
 }
 
 func testProject() *models.Project {
@@ -186,6 +186,52 @@ func TestCreate_HappyPath(t *testing.T) {
 	}
 }
 
+func TestCreate_RepoOwnerMismatch(t *testing.T) {
+	now := time.Now()
+	repo := &mockProjectRepo{
+		saveResp: &models.SaveProjectResponse{Id: "new-proj", CreatedAt: now, UpdatedAt: now},
+	}
+	dcRepo := &mockDeployConfigRepo{
+		saveResp: &models.SaveDeployConfigResponse{Id: "dc-1", CreatedAt: now, UpdatedAt: now},
+	}
+	svc := projects.New(newLogger(), &mockStorage{
+		factory: &mockRepoFactory{projects: repo, deployConfigs: dcRepo},
+	})
+
+	_, err := svc.Create(authedCtx(testUserID), &models.CreateProjectParams{
+		Name:        "new-project",
+		RepoUrl:     "https://github.com/another/new",
+		OwnerId:     testUserID,
+		FrameworkId: "fw-1",
+	})
+	if !errors.Is(err, auth.ErrPermissionDenied) {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
+
+func TestCreate_MissingGitHubLogin(t *testing.T) {
+	now := time.Now()
+	repo := &mockProjectRepo{
+		saveResp: &models.SaveProjectResponse{Id: "new-proj", CreatedAt: now, UpdatedAt: now},
+	}
+	dcRepo := &mockDeployConfigRepo{
+		saveResp: &models.SaveDeployConfigResponse{Id: "dc-1", CreatedAt: now, UpdatedAt: now},
+	}
+	svc := projects.New(newLogger(), &mockStorage{
+		factory: &mockRepoFactory{projects: repo, deployConfigs: dcRepo},
+	})
+
+	_, err := svc.Create(auth.WithUserID(context.Background(), testUserID), &models.CreateProjectParams{
+		Name:        "new-project",
+		RepoUrl:     "https://github.com/test/new",
+		OwnerId:     testUserID,
+		FrameworkId: "fw-1",
+	})
+	if !errors.Is(err, auth.ErrUnauthenticated) {
+		t.Errorf("expected ErrUnauthenticated, got %v", err)
+	}
+}
+
 func TestUpdate_PermissionDenied(t *testing.T) {
 	proj := testProject()
 	repo := &mockProjectRepo{project: proj}
@@ -195,6 +241,21 @@ func TestUpdate_PermissionDenied(t *testing.T) {
 	err := svc.Update(authedCtx(otherUserID), &models.UpdateProjectParams{
 		Id:   "proj-1",
 		Name: &name,
+	})
+	if !errors.Is(err, auth.ErrPermissionDenied) {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
+
+func TestUpdate_RepoOwnerMismatch(t *testing.T) {
+	proj := testProject()
+	repo := &mockProjectRepo{project: proj}
+	svc := projects.New(newLogger(), &mockStorage{factory: &mockRepoFactory{projects: repo}})
+
+	repoURL := "https://github.com/another/repo"
+	err := svc.Update(authedCtx(testUserID), &models.UpdateProjectParams{
+		Id:      "proj-1",
+		RepoUrl: &repoURL,
 	})
 	if !errors.Is(err, auth.ErrPermissionDenied) {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)

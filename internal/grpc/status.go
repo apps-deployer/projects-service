@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/apps-deployer/projects-service/internal/auth"
+	"github.com/apps-deployer/projects-service/internal/services"
 	"github.com/apps-deployer/projects-service/internal/storage"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -16,6 +17,8 @@ func MapError(err error, action string) error {
 		return status.Error(codes.Unauthenticated, "user not authenticated")
 	case errors.Is(err, auth.ErrPermissionDenied):
 		return status.Error(codes.PermissionDenied, "permission denied")
+	case errors.Is(err, services.ErrInvalidArgument):
+		return status.Error(codes.InvalidArgument, "invalid argument")
 	case errors.Is(err, storage.ErrNotFound):
 		return status.Error(codes.NotFound, "not found")
 	case errors.Is(err, storage.ErrAlreadyExists):

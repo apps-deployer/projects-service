@@ -69,6 +69,10 @@ func (p *Projects) Create(ctx context.Context, args *models.CreateProjectParams)
 		slog.String("repoUrl", args.RepoUrl),
 	)
 	log.Info("creating project")
+	if err := validateRepoOwnership(ctx, args.RepoUrl); err != nil {
+		log.Warn("repository ownership check failed", sl.Err(err))
+		return nil, err
+	}
 	project := &models.SaveProjectParams{
 		Name:    args.Name,
 		RepoUrl: args.RepoUrl,
@@ -114,6 +118,12 @@ func (p *Projects) Update(ctx context.Context, args *models.UpdateProjectParams)
 	if err := auth.CheckOwnership(ctx, project.OwnerId); err != nil {
 		log.Warn("ownership check failed", sl.Err(err))
 		return err
+	}
+	if args.RepoUrl != nil {
+		if err := validateRepoOwnership(ctx, *args.RepoUrl); err != nil {
+			log.Warn("repository ownership check failed", sl.Err(err))
+			return err
+		}
 	}
 	err = p.projects.UpdateProject(ctx, args)
 	if err != nil {

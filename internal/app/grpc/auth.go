@@ -12,8 +12,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// AuthInterceptor returns a gRPC unary interceptor that validates JWT tokens
-// from the "authorization" metadata key and injects the user ID into the context.
+// AuthInterceptor validates JWT tokens from the "authorization" metadata key
+// and injects the user ID and GitHub login into the context.
 func AuthInterceptor(jwtSecret string) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
@@ -57,7 +57,8 @@ func AuthInterceptor(jwtSecret string) grpc.UnaryServerInterceptor {
 			return nil, status.Error(codes.Unauthenticated, "missing subject in token")
 		}
 
-		ctx = auth.WithUserID(ctx, sub)
+		githubLogin, _ := claims["github_login"].(string)
+		ctx = auth.WithUser(ctx, sub, githubLogin)
 		return handler(ctx, req)
 	}
 }

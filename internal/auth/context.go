@@ -7,7 +7,10 @@ import (
 
 type contextKey string
 
-const userIDKey contextKey = "user_id"
+const (
+	userIDKey      contextKey = "user_id"
+	githubLoginKey contextKey = "github_login"
+)
 
 var (
 	ErrUnauthenticated  = errors.New("unauthenticated")
@@ -19,10 +22,30 @@ func WithUserID(ctx context.Context, userID string) context.Context {
 	return context.WithValue(ctx, userIDKey, userID)
 }
 
+// WithGitHubLogin returns a new context with the GitHub login stored.
+func WithGitHubLogin(ctx context.Context, login string) context.Context {
+	return context.WithValue(ctx, githubLoginKey, login)
+}
+
+// WithUser returns a new context with authenticated user fields stored.
+func WithUser(ctx context.Context, userID string, githubLogin string) context.Context {
+	ctx = WithUserID(ctx, userID)
+	if githubLogin != "" {
+		ctx = WithGitHubLogin(ctx, githubLogin)
+	}
+	return ctx
+}
+
 // UserIDFromContext extracts the authenticated user ID from the context.
 func UserIDFromContext(ctx context.Context) (string, bool) {
 	id, ok := ctx.Value(userIDKey).(string)
 	return id, ok
+}
+
+// GitHubLoginFromContext extracts the authenticated GitHub login from the context.
+func GitHubLoginFromContext(ctx context.Context) (string, bool) {
+	login, ok := ctx.Value(githubLoginKey).(string)
+	return login, ok
 }
 
 // MustUserID extracts the user ID from the context or returns ErrUnauthenticated.

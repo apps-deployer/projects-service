@@ -18,6 +18,31 @@ func TestWithUserID_And_UserIDFromContext(t *testing.T) {
 	}
 }
 
+func TestWithGitHubLogin_And_GitHubLoginFromContext(t *testing.T) {
+	ctx := auth.WithGitHubLogin(context.Background(), "octocat")
+	login, ok := auth.GitHubLoginFromContext(ctx)
+	if !ok {
+		t.Fatal("expected GitHub login in context")
+	}
+	if login != "octocat" {
+		t.Errorf("expected %q, got %q", "octocat", login)
+	}
+}
+
+func TestWithUser(t *testing.T) {
+	ctx := auth.WithUser(context.Background(), "user-123", "octocat")
+
+	id, ok := auth.UserIDFromContext(ctx)
+	if !ok || id != "user-123" {
+		t.Fatalf("expected user ID %q, got %q", "user-123", id)
+	}
+
+	login, ok := auth.GitHubLoginFromContext(ctx)
+	if !ok || login != "octocat" {
+		t.Fatalf("expected GitHub login %q, got %q", "octocat", login)
+	}
+}
+
 func TestUserIDFromContext_Missing(t *testing.T) {
 	_, ok := auth.UserIDFromContext(context.Background())
 	if ok {
