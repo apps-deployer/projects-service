@@ -201,6 +201,27 @@ func TestCreate_PermissionDenied(t *testing.T) {
 	}
 }
 
+func TestUpdate_HappyPath(t *testing.T) {
+	svc := newService(defaultProject(), &mockEnvRepo{env: testEnv()})
+	name := "staging"
+	err := svc.Update(authedCtx(), &models.UpdateEnvParams{Id: "env-1", Name: &name})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestUpdate_PermissionDenied(t *testing.T) {
+	otherProject := &mockProjectRepo{
+		project: &models.Project{Id: testProjectID, OwnerId: "other-user"},
+	}
+	svc := newService(otherProject, &mockEnvRepo{env: testEnv()})
+	name := "staging"
+	err := svc.Update(authedCtx(), &models.UpdateEnvParams{Id: "env-1", Name: &name})
+	if !errors.Is(err, auth.ErrPermissionDenied) {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
+
 func TestDelete_HappyPath(t *testing.T) {
 	svc := newService(defaultProject(), &mockEnvRepo{env: testEnv()})
 	err := svc.Delete(authedCtx(), "env-1")

@@ -361,3 +361,65 @@ func TestUpdateProjectVar_PermissionDenied(t *testing.T) {
 		t.Errorf("expected ErrPermissionDenied, got %v", err)
 	}
 }
+
+func TestDeleteProjectVar_PermissionDenied(t *testing.T) {
+	pvRepo := &mockProjectVarRepo{ownerID: "other-user"}
+	svc := vars.New(newTestLogger(), newTestStorage(pvRepo, nil, nil, defaultProjectRepo(), nil))
+
+	err := svc.DeleteProjectVar(authedCtx(), "var-uuid")
+	if !errors.Is(err, auth.ErrPermissionDenied) {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
+
+func TestListEnvVars_HappyPath(t *testing.T) {
+	now := time.Now()
+	evRepo := &mockEnvVarRepo{
+		listResp: []*models.Var{
+			{Id: "ev1", Key: "ENV_KEY", CreatedAt: now, UpdatedAt: now},
+		},
+	}
+	svc := vars.New(newTestLogger(), newTestStorage(nil, evRepo, nil, defaultProjectRepo(), defaultEnvRepo()))
+
+	result, err := svc.ListEnvVars(authedCtx(), &models.ListEnvVarsParams{
+		EnvId: testEnvID,
+		Limit: 10,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(result) != 1 {
+		t.Errorf("expected 1 var, got %d", len(result))
+	}
+}
+
+func TestUpdateEnvVar_HappyPath(t *testing.T) {
+	evRepo := &mockEnvVarRepo{ownerID: testUserID}
+	svc := vars.New(newTestLogger(), newTestStorage(nil, evRepo, nil, defaultProjectRepo(), defaultEnvRepo()))
+
+	newValue := "new"
+	err := svc.UpdateEnvVar(authedCtx(), &models.UpdateVarParams{Id: "env-var", Value: &newValue})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestDeleteEnvVar_HappyPath(t *testing.T) {
+	evRepo := &mockEnvVarRepo{ownerID: testUserID}
+	svc := vars.New(newTestLogger(), newTestStorage(nil, evRepo, nil, defaultProjectRepo(), defaultEnvRepo()))
+
+	if err := svc.DeleteEnvVar(authedCtx(), "env-var"); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestUpdateEnvVar_PermissionDenied(t *testing.T) {
+	evRepo := &mockEnvVarRepo{ownerID: "other-user"}
+	svc := vars.New(newTestLogger(), newTestStorage(nil, evRepo, nil, defaultProjectRepo(), defaultEnvRepo()))
+
+	newValue := "new"
+	err := svc.UpdateEnvVar(authedCtx(), &models.UpdateVarParams{Id: "env-var", Value: &newValue})
+	if !errors.Is(err, auth.ErrPermissionDenied) {
+		t.Errorf("expected ErrPermissionDenied, got %v", err)
+	}
+}
